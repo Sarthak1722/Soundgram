@@ -178,7 +178,9 @@ const PlaylistDetailPage = () => {
                     </div>
                   </div>
                   <p className="hidden min-w-0 flex-1 truncate text-zinc-400 sm:block">{track.artist}</p>
-                  <p className="w-14 shrink-0 text-right tabular-nums text-zinc-500">—</p>
+                  <p className="w-14 shrink-0 text-right tabular-nums text-zinc-500">
+                    {track.duration || "—"}
+                  </p>
                   <button
                     onClick={() => handleRemoveTrack(track.trackId)}
                     disabled={removingTrack === track.trackId}

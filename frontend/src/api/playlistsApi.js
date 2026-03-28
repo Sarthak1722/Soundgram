@@ -12,6 +12,8 @@ function normalizeTrack(track) {
     title: track.title ?? "",
     artist: track.artist ?? "",
     url: track.url ?? "",
+    duration: track.duration ?? "",
+    durationSeconds: track.durationSeconds ?? null,
     addedAt: track.addedAt ?? null,
   };
 }

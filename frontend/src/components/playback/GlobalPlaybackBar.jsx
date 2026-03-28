@@ -8,7 +8,7 @@ import {
 } from "react-icons/io5";
 import { usePlaybackActions } from "./PlaybackActionsProvider.jsx";
 import { usePlaybackAudioSync } from "../../hooks/usePlaybackAudioSync.js";
-import { effectivePlaybackTime } from "../../utils/playbackTime.js";
+import { usePlaybackTimeline } from "../../hooks/usePlaybackTimeline.js";
 import { fetchPlaybackTracks } from "../../api/playbackApi.js";
 import { setPlaybackQueueIndex } from "../../redux/playbackSlice.js";
 
@@ -54,7 +54,6 @@ const GlobalPlaybackBar = () => {
   const [duration, setDuration] = useState(0);
   const [catalog, setCatalog] = useState([]);
   const [, setUiTick] = useState(0);
-  const [seekPreview, setSeekPreview] = useState(null);
 
   useEffect(() => {
     if (!authUser?._id) return;
@@ -66,9 +65,18 @@ const GlobalPlaybackBar = () => {
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
-    const onDur = () => setDuration(el.duration || 0);
+    const onDur = () => {
+      const nextDuration = Number(el.duration);
+      setDuration(Number.isFinite(nextDuration) && nextDuration > 0 ? nextDuration : 0);
+    };
+
+    onDur();
     el.addEventListener("loadedmetadata", onDur);
-    return () => el.removeEventListener("loadedmetadata", onDur);
+    el.addEventListener("durationchange", onDur);
+    return () => {
+      el.removeEventListener("loadedmetadata", onDur);
+      el.removeEventListener("durationchange", onDur);
+    };
   }, [playback.currentTrack?.id]);
 
   useEffect(() => {
@@ -77,15 +85,14 @@ const GlobalPlaybackBar = () => {
     return () => clearInterval(id);
   }, [playback.isPlaying]);
 
-  const displayTime =
-    seekPreview != null ? seekPreview : effectivePlaybackTime(playback);
-  const maxDur = Number.isFinite(duration) && duration > 0 ? duration : 1;
-
-  const onSeekPointerUp = useCallback(() => {
-    if (seekPreview == null) return;
-    emitSeek(seekPreview);
-    setSeekPreview(null);
-  }, [seekPreview, emitSeek]);
+  const {
+    displayTime,
+    durationSeconds: resolvedDuration,
+    maxDuration: maxDur,
+    beginSeeking,
+    updateSeeking,
+    commitSeeking,
+  } = usePlaybackTimeline(playback, duration, emitSeek);
 
   const handleTrackEnd = useCallback(() => {
     if (hasActiveJam) {
@@ -113,10 +120,6 @@ const GlobalPlaybackBar = () => {
       }
     }
   }, [hasActiveJam, emitNextTrack, queue, queueIndex, playback.currentTrack, catalog, dispatch, emitChangeTrack]);
-
-  const onSeekInput = useCallback((e) => {
-    setSeekPreview(Number(e.target.value));
-  }, []);
 
   if (!authUser?._id) return null;
 
@@ -225,12 +228,15 @@ const GlobalPlaybackBar = () => {
               step={0.25}
               disabled={!playback.currentTrack}
               value={Math.min(displayTime, maxDur)}
-              onChange={onSeekInput}
-              onMouseUp={onSeekPointerUp}
-              onTouchEnd={onSeekPointerUp}
+              onPointerDown={beginSeeking}
+              onFocus={beginSeeking}
+              onChange={(e) => updateSeeking(e.target.value)}
+              onPointerUp={(e) => commitSeeking(e.target.value)}
+              onKeyUp={(e) => commitSeeking(e.target.value)}
+              onBlur={(e) => commitSeeking(e.target.value)}
               className="h-1 flex-1 accent-emerald-500 disabled:opacity-30"
             />
-            <span>{formatTime(duration)}</span>
+            <span>{formatTime(resolvedDuration)}</span>
           </div>
         </div>
 

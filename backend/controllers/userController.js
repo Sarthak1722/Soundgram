@@ -3,7 +3,7 @@ import { User } from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { io } from "../socket/socket.js";
+import { broadcastPresenceSnapshots, io } from "../socket/socket.js";
 
 dotenv.config({ quiet: true });
 
@@ -58,6 +58,9 @@ export const register = async (req, res) => {
       password: password,
       profilePhoto: profilePhoto,
       gender: gender,
+    });
+    void broadcastPresenceSnapshots().catch((broadcastError) => {
+      console.error("presence broadcast failed", broadcastError);
     });
     return res
       .status(201)

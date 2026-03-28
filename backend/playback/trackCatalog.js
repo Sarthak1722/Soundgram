@@ -6,6 +6,27 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let cached = null;
 
+export function parseTrackDurationSeconds(duration) {
+  if (typeof duration === "number" && Number.isFinite(duration)) {
+    return Math.max(0, duration);
+  }
+
+  if (typeof duration !== "string") {
+    return null;
+  }
+
+  const parts = duration
+    .split(":")
+    .map((part) => Number(part.trim()))
+    .filter((part) => Number.isFinite(part));
+
+  if (!parts.length) {
+    return null;
+  }
+
+  return parts.reduce((total, part) => total * 60 + part, 0);
+}
+
 /**
  * Static catalog (phase 1). Phase 2: swap loader for Spotify metadata adapter.
  */
@@ -33,6 +54,7 @@ export function toPlaybackTrack(track) {
     artist: track.artist,
     album: track.album,
     duration: track.duration,
+    durationSeconds: parseTrackDurationSeconds(track.duration),
     url: `/songs/${track.file}`,
   };
 }

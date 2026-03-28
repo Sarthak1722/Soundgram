@@ -43,6 +43,8 @@ const LikedMusicPage = () => {
         title: track.title,
         artist: track.artist,
         url: track.url,
+        duration: track.duration,
+        durationSeconds: track.durationSeconds,
       });
       if (updatedPlaylist) {
         setPlaylists(prev =>

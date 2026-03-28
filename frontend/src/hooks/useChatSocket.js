@@ -6,7 +6,7 @@ import {
   applyMessagesRead,
   setPeerTyping,
 } from "../redux/messageSlice.js";
-import { setonlineUsers } from "../redux/userSlice.js";
+import { setonlineUsers, setotherUsers } from "../redux/userSlice.js";
 import { isMessageInConversation } from "../utils/messageConversation.js";
 
 /**
@@ -38,6 +38,10 @@ export function useChatSocket() {
       dispatch(setonlineUsers(userIds));
     };
 
+    const onOtherUsers = (users) => {
+      dispatch(setotherUsers(Array.isArray(users) ? users : []));
+    };
+
     const onMessagesRead = ({ messageIds, readAt }) => {
       dispatch(applyMessagesRead({ messageIds, readAt }));
     };
@@ -50,12 +54,15 @@ export function useChatSocket() {
 
     socket.on("newMessage", onNewMessage);
     socket.on("getOnlineUsers", onOnlineUsers);
+    socket.on("otherUsers", onOtherUsers);
     socket.on("messagesRead", onMessagesRead);
     socket.on("peerTyping", onPeerTyping);
+    socket.emit("presenceSync");
 
     return () => {
       socket.off("newMessage", onNewMessage);
       socket.off("getOnlineUsers", onOnlineUsers);
+      socket.off("otherUsers", onOtherUsers);
       socket.off("messagesRead", onMessagesRead);
       socket.off("peerTyping", onPeerTyping);
     };

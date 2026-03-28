@@ -1,15 +1,30 @@
 import { Playlist } from "../models/playlistModel.js";
 import { User } from "../models/userModel.js";
+import { parseTrackDurationSeconds, trackById } from "../playback/trackCatalog.js";
 
-const serializeTrack = (track) => ({
-  trackId: track.trackId,
-  id: track.trackId,
-  _id: track.trackId,
-  title: track.title,
-  artist: track.artist,
-  url: track.url,
-  addedAt: track.addedAt,
-});
+const serializeTrack = (track) => {
+  const catalogTrack = trackById(track.trackId);
+  const duration =
+    track.duration ??
+    catalogTrack?.duration ??
+    "";
+  const durationSeconds =
+    parseTrackDurationSeconds(track.durationSeconds) ??
+    parseTrackDurationSeconds(track.duration) ??
+    parseTrackDurationSeconds(catalogTrack?.duration);
+
+  return {
+    trackId: track.trackId,
+    id: track.trackId,
+    _id: track.trackId,
+    title: track.title,
+    artist: track.artist,
+    url: track.url,
+    duration,
+    durationSeconds,
+    addedAt: track.addedAt,
+  };
+};
 
 const serializePlaylist = (playlist) => {
   const tracks = (playlist.tracks || []).map(serializeTrack);
@@ -238,7 +253,7 @@ export const addTrackToPlaylist = async (req, res) => {
     }
 
     const { id } = req.params;
-    const { trackId, title, artist, url } = req.body;
+    const { trackId, title, artist, url, duration, durationSeconds } = req.body;
     const userId = req.id;
 
     if (!trackId || !title || !artist || !url) {
@@ -247,6 +262,8 @@ export const addTrackToPlaylist = async (req, res) => {
         message: "Track details are required",
       });
     }
+
+    const catalogTrack = trackById(trackId);
 
     // Check if track already exists in playlist
     const playlist = await Playlist.findOne({ _id: id, userId });
@@ -270,6 +287,11 @@ export const addTrackToPlaylist = async (req, res) => {
       title,
       artist,
       url,
+      duration: duration ?? catalogTrack?.duration ?? "",
+      durationSeconds:
+        parseTrackDurationSeconds(durationSeconds) ??
+        parseTrackDurationSeconds(duration) ??
+        parseTrackDurationSeconds(catalogTrack?.duration),
       addedAt: new Date(),
     });
 

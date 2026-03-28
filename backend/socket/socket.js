@@ -3,6 +3,7 @@ import http from "http";
 import mongoose from "mongoose";
 import { Server } from "socket.io";
 import { Message } from "../models/messageModel.js";
+import { User } from "../models/userModel.js";
 import {
   attachPlaybackSocketHandlers,
   detachPlaybackOnDisconnect,
@@ -15,6 +16,45 @@ const io = new Server(server);
 
 /** @type {Record<string, string>} userId (string) -> socket.id */
 const userSocketMap = {};
+
+function mapOtherUsers(allUsers, currentUserId) {
+  return allUsers.filter((user) => String(user._id) !== String(currentUserId));
+}
+
+async function loadAllUsers() {
+  return User.find({}).select("-password").lean();
+}
+
+export async function emitPresenceSnapshotToSocket(socket, userId, allUsers = null) {
+  if (!socket || !userId) {
+    return;
+  }
+
+  const users = Array.isArray(allUsers) ? allUsers : await loadAllUsers();
+  const onlineUsers = Object.keys(userSocketMap);
+  const otherUsers = mapOtherUsers(users, userId);
+
+  socket.emit("getOnlineUsers", onlineUsers);
+  socket.emit("otherUsers", otherUsers);
+}
+
+export async function broadcastPresenceSnapshots() {
+  const sockets = await io.fetchSockets();
+  if (!sockets.length) {
+    return;
+  }
+
+  const allUsers = await loadAllUsers();
+  await Promise.all(
+    sockets.map(async (socket) => {
+      const socketUserId = socket.data?.userId;
+      if (!socketUserId) {
+        return;
+      }
+      await emitPresenceSnapshotToSocket(socket, socketUserId, allUsers);
+    }),
+  );
+}
 
 export function getSocketIdForUser(userId) {
   if (userId == null || userId === "undefined") return undefined;
@@ -61,11 +101,23 @@ io.on("connection", (socket) => {
 
   if (userId) {
     userSocketMap[userId] = socket.id;
+    socket.data.userId = userId;
   }
 
-  io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  void emitPresenceSnapshotToSocket(socket, userId).catch((error) => {
+    console.error("presence snapshot failed", error);
+  });
+  void broadcastPresenceSnapshots().catch((error) => {
+    console.error("presence broadcast failed", error);
+  });
 
   attachPlaybackSocketHandlers(io, socket, userId);
+
+  socket.on("presenceSync", () => {
+    void emitPresenceSnapshotToSocket(socket, userId).catch((error) => {
+      console.error("presence sync failed", error);
+    });
+  });
 
   socket.on("typing", ({ toUserId }) => {
     if (!userId || !toUserId) return;
@@ -111,7 +163,9 @@ io.on("connection", (socket) => {
     if (userId) {
       delete userSocketMap[userId];
     }
-    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+    void broadcastPresenceSnapshots().catch((error) => {
+      console.error("presence broadcast failed", error);
+    });
   });
 });
 

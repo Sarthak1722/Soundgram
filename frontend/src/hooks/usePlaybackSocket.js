@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useSocket } from "../context/SocketContext.jsx";
 import { applyPlaybackUpdate, playNext, playPrevious, setPlaybackQueue } from "../redux/playbackSlice.js";
 import { effectivePlaybackTime } from "../utils/playbackTime.js";
+import { getTrackDurationSeconds } from "../utils/trackDuration.js";
+import { normalizePlaybackQueue } from "../utils/playbackTrack.js";
 
 function jamKey(jam) {
   if (!jam) return "";
@@ -79,6 +81,23 @@ export function usePlaybackSocket() {
     [activeJam, authUser, dispatch],
   );
 
+  const optimisticJamPlaybackUpdate = useCallback(
+    (patch) => {
+      const jam = jamRef.current;
+      if (!jam || !authUser?._id) return;
+
+      dispatch(
+        applyPlaybackUpdate({
+          roomId: playback.roomId,
+          serverNow: Date.now(),
+          updatedBy: authUser._id,
+          ...patch,
+        }),
+      );
+    },
+    [authUser?._id, dispatch, playback.roomId],
+  );
+
   const emitPlay = useCallback(() => {
     const jam = jamRef.current;
     if (jam) {
@@ -115,21 +134,29 @@ export function usePlaybackSocket() {
 
   const emitSeek = useCallback(
     (time) => {
+      const durationSeconds = getTrackDurationSeconds(playback.currentTrack);
+      const clampedTime = Number.isFinite(durationSeconds) && durationSeconds > 0
+        ? Math.min(Math.max(0, Number(time) || 0), durationSeconds)
+        : Math.max(0, Number(time) || 0);
       const jam = jamRef.current;
       if (jam) {
+        optimisticJamPlaybackUpdate({
+          positionSeconds: clampedTime,
+          playheadEpochMs: playback.isPlaying ? Date.now() : null,
+        });
         if (!socket?.connected) return;
-        if (jam.kind === "dm") socket.emit("seek", { peerUserId: jam.peerId, time });
-        else socket.emit("seek", { roomId: jam.roomId, time });
+        if (jam.kind === "dm") socket.emit("seek", { peerUserId: jam.peerId, time: clampedTime });
+        else socket.emit("seek", { roomId: jam.roomId, time: clampedTime });
         return;
       }
 
       if (!playback.currentTrack) return;
       localUpdatePlayback({
-        positionSeconds: time,
+        positionSeconds: clampedTime,
         playheadEpochMs: playback.isPlaying ? Date.now() : null,
       });
     },
-    [socket, playback, localUpdatePlayback],
+    [socket, playback, localUpdatePlayback, optimisticJamPlaybackUpdate],
   );
 
   const emitChangeTrack = useCallback(
@@ -162,7 +189,7 @@ export function usePlaybackSocket() {
 
   const emitPlaySelection = useCallback(
     (tracks, startIndex = 0) => {
-      const queue = Array.isArray(tracks) ? tracks.filter((track) => track?.id && track?.url) : [];
+      const queue = normalizePlaybackQueue(tracks);
       if (!queue.length) return;
 
       const normalizedIndex = ((Number(startIndex) || 0) % queue.length + queue.length) % queue.length;

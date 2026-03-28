@@ -35,6 +35,14 @@ const playlistModel = new mongoose.Schema(
           type: String,
           required: true,
         },
+        duration: {
+          type: String,
+          default: "",
+        },
+        durationSeconds: {
+          type: Number,
+          default: null,
+        },
         addedAt: {
           type: Date,
           default: Date.now,

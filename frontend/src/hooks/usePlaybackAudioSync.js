@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { effectivePlaybackTime } from "../utils/playbackTime.js";
 import { resolveAppUrl } from "../config/runtime.js";
+import { getTrackDurationSeconds } from "../utils/trackDuration.js";
 
 export function fullAudioUrl(urlPath) {
   return resolveAppUrl(urlPath);
@@ -13,6 +14,7 @@ export function fullAudioUrl(urlPath) {
 export function usePlaybackAudioSync(audioRef) {
   const playback = useSelector((s) => s.playback);
   const playbackRef = useRef(playback);
+  const lastSyncStampRef = useRef(null);
   playbackRef.current = playback;
 
   const currentTrack = playback.currentTrack;
@@ -20,6 +22,7 @@ export function usePlaybackAudioSync(audioRef) {
   const positionSeconds = playback.positionSeconds;
   const playheadEpochMs = playback.playheadEpochMs;
   const serverNow = playback.serverNow;
+  const trackDurationSeconds = getTrackDurationSeconds(currentTrack);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -42,8 +45,19 @@ export function usePlaybackAudioSync(audioRef) {
 
     const syncElement = () => {
       const t = effectivePlaybackTime(playbackRef.current);
-      if (Number.isFinite(t) && t >= 0 && Math.abs(el.currentTime - t) > 0.85) {
-        el.currentTime = t;
+      const clampedTime =
+        Number.isFinite(trackDurationSeconds) && trackDurationSeconds > 0
+          ? Math.min(t, trackDurationSeconds)
+          : t;
+      const syncStamp = `${playbackRef.current.serverNow ?? "local"}:${playbackRef.current.positionSeconds}:${playbackRef.current.isPlaying ? 1 : 0}`;
+
+      if (
+        Number.isFinite(clampedTime) &&
+        clampedTime >= 0 &&
+        (lastSyncStampRef.current !== syncStamp || Math.abs(el.currentTime - clampedTime) > 0.1)
+      ) {
+        el.currentTime = clampedTime;
+        lastSyncStampRef.current = syncStamp;
       }
       if (playbackRef.current.isPlaying) {
         el.play().catch(() => {});
@@ -70,5 +84,6 @@ export function usePlaybackAudioSync(audioRef) {
     positionSeconds,
     playheadEpochMs,
     serverNow,
+    trackDurationSeconds,
   ]);
 }

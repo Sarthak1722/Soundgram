@@ -21,6 +21,9 @@ const playbackSlice = createSlice({
   reducers: {
     applyPlaybackUpdate: (state, action) => {
       const p = action.payload;
+      const isRemoteSnapshot =
+        p.serverNow !== undefined && p.serverNow !== null && p.currentTime !== undefined;
+
       if ("roomId" in p) state.roomId = p.roomId;
       if (p.currentTrack !== undefined) {
         state.currentTrack = p.currentTrack;
@@ -28,16 +31,24 @@ const playbackSlice = createSlice({
       if (p.isPlaying !== undefined) {
         state.isPlaying = Boolean(p.isPlaying);
       }
-      if (p.positionSeconds !== undefined) {
-        state.positionSeconds = Number(p.positionSeconds) || 0;
-      } else if (p.currentTime !== undefined) {
+
+      if (isRemoteSnapshot) {
         state.positionSeconds = Number(p.currentTime) || 0;
-      }
-      if (p.playheadEpochMs === null || p.playheadEpochMs === undefined) {
-        state.playheadEpochMs = null;
+        state.playheadEpochMs = state.isPlaying ? Date.now() : null;
       } else {
-        state.playheadEpochMs = Number(p.playheadEpochMs);
+        if (p.positionSeconds !== undefined) {
+          state.positionSeconds = Number(p.positionSeconds) || 0;
+        } else if (p.currentTime !== undefined) {
+          state.positionSeconds = Number(p.currentTime) || 0;
+        }
+
+        if (p.playheadEpochMs === null || p.playheadEpochMs === undefined) {
+          state.playheadEpochMs = null;
+        } else {
+          state.playheadEpochMs = Number(p.playheadEpochMs);
+        }
       }
+
       if (Array.isArray(p.queue)) {
         state.queue = p.queue;
       }

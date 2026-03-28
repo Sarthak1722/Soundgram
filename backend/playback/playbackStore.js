@@ -1,4 +1,9 @@
-import { loadTrackCatalog, toPlaybackTrack } from "./trackCatalog.js";
+import {
+  loadTrackCatalog,
+  parseTrackDurationSeconds,
+  trackById,
+  toPlaybackTrack,
+} from "./trackCatalog.js";
 
 /** @type {Map<string, object>} */
 const roomStates = new Map();
@@ -26,17 +31,42 @@ function defaultState() {
 function normalizePlaybackTrack(track) {
   if (!track) return null;
   const id = track.id ?? track.trackId ?? track._id ?? null;
-  const url = track.url ?? null;
+  const catalogTrack = id ? trackById(id) : null;
+  const url = track.url ?? (catalogTrack?.file ? `/songs/${catalogTrack.file}` : null);
   if (!id || !url) return null;
 
   return {
     id: String(id),
-    title: track.title ?? "",
-    artist: track.artist ?? "",
-    album: track.album ?? "",
-    duration: track.duration ?? "",
+    title: track.title ?? catalogTrack?.title ?? "",
+    artist: track.artist ?? catalogTrack?.artist ?? "",
+    album: track.album ?? catalogTrack?.album ?? "",
+    duration: track.duration ?? catalogTrack?.duration ?? "",
+    durationSeconds:
+      parseTrackDurationSeconds(track.durationSeconds) ??
+      parseTrackDurationSeconds(track.duration) ??
+      parseTrackDurationSeconds(catalogTrack?.duration),
     url,
   };
+}
+
+function getTrackDurationSeconds(track) {
+  const durationSeconds =
+    parseTrackDurationSeconds(track?.durationSeconds) ??
+    parseTrackDurationSeconds(track?.duration);
+
+  return Number.isFinite(durationSeconds) && durationSeconds > 0
+    ? durationSeconds
+    : null;
+}
+
+function clampPositionToTrack(track, timeSeconds) {
+  const normalizedTime = Math.max(0, Number(timeSeconds) || 0);
+  const durationSeconds = getTrackDurationSeconds(track);
+  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+    return normalizedTime;
+  }
+
+  return Math.min(normalizedTime, durationSeconds);
 }
 
 function buildCatalogQueue() {
@@ -65,8 +95,14 @@ export function getOrCreateRoomState(roomId) {
 }
 
 function effectivePositionSeconds(state, now = Date.now()) {
-  if (!state.isPlaying || state.playheadEpochMs == null) return state.positionSeconds;
-  return state.positionSeconds + (now - state.playheadEpochMs) / 1000;
+  if (!state.isPlaying || state.playheadEpochMs == null) {
+    return clampPositionToTrack(state.currentTrack, state.positionSeconds);
+  }
+
+  return clampPositionToTrack(
+    state.currentTrack,
+    state.positionSeconds + (now - state.playheadEpochMs) / 1000,
+  );
 }
 
 function freezePosition(state, now = Date.now()) {
@@ -157,7 +193,7 @@ export function applySeek(roomId, userId, timeSeconds) {
   const now = Date.now();
   const wasPlaying = state.isPlaying;
   freezePosition(state, now);
-  state.positionSeconds = Math.max(0, Number(timeSeconds) || 0);
+  state.positionSeconds = clampPositionToTrack(state.currentTrack, timeSeconds);
   if (wasPlaying) {
     resumeFromAnchor(state, now);
   }

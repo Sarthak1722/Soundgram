@@ -1,12 +1,8 @@
 import React from "react";
 import OtherUser from './OtherUser.jsx';
-import useGetOtherUsers from '../hooks/useGetOtherUsers.jsx'
-import useGetRealTimeOtherUsers from '../hooks/useGetRealTimeOtherUsers.jsx'
-import { useSelector, useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 
 const OtherUsers = ({ users }) => {
-  useGetOtherUsers();
-  useGetRealTimeOtherUsers();
   const {otherUsers} = useSelector(store => store.user);
 
   if(!otherUsers) return null;
