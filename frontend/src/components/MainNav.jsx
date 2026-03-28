@@ -61,7 +61,7 @@ const MainNav = () => {
           S
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold tracking-tight text-white">Soundgram</p>
+          <p className="truncate text-sm font-semibold tracking-tight text-white">Jamify</p>
           <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-500">
             Music · Social
           </p>
