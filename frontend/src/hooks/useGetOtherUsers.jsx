@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useSocket } from "../context/SocketContext.jsx";
+import { useSocket } from "../context/useSocket.js";
 
 /**
  * Presence is socket-driven; request a fresh snapshot whenever this hook mounts or reconnects.

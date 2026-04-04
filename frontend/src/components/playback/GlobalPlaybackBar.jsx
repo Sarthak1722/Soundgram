@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   IoPlay,
@@ -6,7 +6,7 @@ import {
   IoPlaySkipBack,
   IoPlaySkipForward,
 } from "react-icons/io5";
-import { usePlaybackActions } from "./PlaybackActionsProvider.jsx";
+import { usePlaybackActions } from "./usePlaybackActions.js";
 import { usePlaybackAudioSync } from "../../hooks/usePlaybackAudioSync.js";
 import { usePlaybackTimeline } from "../../hooks/usePlaybackTimeline.js";
 import { fetchPlaybackTracks } from "../../api/playbackApi.js";
@@ -33,7 +33,7 @@ const GlobalPlaybackBar = ({ mobile = false }) => {
   const audioRef = useRef(null);
   const dispatch = useDispatch();
   const playback = useSelector((s) => s.playback);
-  const queue = playback.queue || [];
+  const queue = useMemo(() => playback.queue || [], [playback.queue]);
   const queueIndex = Number.isFinite(playback.queueIndex) ? playback.queueIndex : -1;
   const activeJam = useSelector((s) => s.rooms.activeJam);
   const authUser = useSelector((s) => s.user.authUser);
@@ -150,21 +150,21 @@ const GlobalPlaybackBar = ({ mobile = false }) => {
 
   if (mobile) {
     return (
-      <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(21,21,22,0.98),rgba(15,15,16,0.96))] px-4 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+      <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(21,21,22,0.98),rgba(15,15,16,0.96))] px-3.5 py-2.5 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl">
         <audio ref={audioRef} preload="auto" className="hidden" onEnded={handleTrackEnd} />
 
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-800 text-base font-bold text-white shadow-lg shadow-emerald-950/50">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-emerald-500 to-emerald-800 text-sm font-bold text-white shadow-lg shadow-emerald-950/50">
             ♪
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-white">
+            <p className="truncate text-[13px] font-semibold text-white">
               {playback.currentTrack?.title || "Pick a track"}
             </p>
-            <p className="truncate text-xs text-zinc-400">
+            <p className="truncate text-[11px] text-zinc-400">
               {playback.currentTrack?.artist || "Your global player stays with every screen"}
             </p>
-            <p className="truncate pt-0.5 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+            <p className="truncate pt-0.5 text-[9px] uppercase tracking-[0.2em] text-zinc-500">
               {activeJam ? jamSubtitle(activeJam, playback.roomId) : "Solo playback"}
             </p>
           </div>
@@ -173,36 +173,36 @@ const GlobalPlaybackBar = ({ mobile = false }) => {
             <button
               type="button"
               onClick={handlePrevTrack}
-              className="rounded-full p-2 text-zinc-300 transition hover:bg-white/10 hover:text-white"
+              className="rounded-full p-1.5 text-zinc-300 transition hover:bg-white/10 hover:text-white"
               aria-label="Previous track"
             >
-              <IoPlaySkipBack className="text-base" />
+              <IoPlaySkipBack className="text-[15px]" />
             </button>
             <button
               type="button"
               disabled={!playback.currentTrack}
               onClick={() => (playback.isPlaying ? emitPause() : emitPlay())}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black transition hover:scale-105 disabled:opacity-30"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black transition hover:scale-105 disabled:opacity-30"
               aria-label={playback.isPlaying ? "Pause" : "Play"}
             >
               {playback.isPlaying ? (
-                <IoPause className="text-lg" />
+                <IoPause className="text-base" />
               ) : (
-                <IoPlay className="pl-0.5 text-lg" />
+                <IoPlay className="pl-0.5 text-base" />
               )}
             </button>
             <button
               type="button"
               onClick={handleNextTrack}
-              className="rounded-full p-2 text-zinc-300 transition hover:bg-white/10 hover:text-white"
+              className="rounded-full p-1.5 text-zinc-300 transition hover:bg-white/10 hover:text-white"
               aria-label="Next track"
             >
-              <IoPlaySkipForward className="text-base" />
+              <IoPlaySkipForward className="text-[15px]" />
             </button>
           </div>
         </div>
 
-        <div className="mt-2.5 flex items-center gap-2 text-[10px] text-zinc-500 tabular-nums">
+        <div className="mt-2 flex items-center gap-2 text-[10px] text-zinc-500 tabular-nums">
           <span>{formatTime(displayTime)}</span>
           <input
             type="range"

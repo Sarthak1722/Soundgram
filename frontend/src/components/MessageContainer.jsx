@@ -11,7 +11,7 @@ import {
   IoPeople,
 } from "react-icons/io5";
 import { isUserOnline, normalizeUserId } from "../utils/messageConversation.js";
-import { useSocket } from "../context/SocketContext.jsx";
+import { useSocket } from "../context/useSocket.js";
 import {
   setActiveJam,
   clearActiveJam,
@@ -270,40 +270,33 @@ const MessageContainer = () => {
     <>
       {selectedUser !== null || selectedRoomChat ? (
         <div className="relative flex min-h-0 w-full flex-1 flex-col bg-[radial-gradient(circle_at_top,rgba(26,42,34,0.24),transparent_38%),linear-gradient(180deg,rgba(8,8,8,0.95),rgba(6,6,7,0.94))] backdrop-blur-md">
-          <div
-            className="
-        sticky top-0 z-10 flex min-h-16 shrink-0 items-center
-        border-b border-white/[0.08]
-        bg-[#111111]/92
-        px-4 sm:px-6
-        "
-          >
+          <div className="sticky top-0 z-10 flex min-h-15 shrink-0 items-center border-b border-white/[0.08] bg-[#111111]/90 px-3 py-2 sm:min-h-16 sm:px-5">
             <button
               type="button"
               onClick={closeThread}
-              className="mr-3 rounded-full border border-white/10 bg-white/[0.05] p-2 text-zinc-300 lg:hidden"
+              className="mr-2 rounded-full border border-white/10 bg-white/[0.05] p-2 text-zinc-300 lg:hidden"
               aria-label="Back to inbox"
             >
-              <IoArrowBack className="text-lg" />
+              <IoArrowBack className="text-base" />
             </button>
             {isGroupThread ? (
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500/35 to-cyan-500/20 text-emerald-200">
+              <div className="flex h-9 w-9 items-center justify-center rounded-[18px] bg-gradient-to-br from-emerald-500/35 to-cyan-500/20 text-emerald-200 sm:h-10 sm:w-10 sm:rounded-2xl">
                 <IoPeople />
               </div>
             ) : (
               <div className="relative">
-                <img src={selectedUser?.profilePhoto} className="h-10 w-10 rounded-full object-cover" alt="" />
+                <img src={selectedUser?.profilePhoto} className="h-9 w-9 rounded-full object-cover sm:h-10 sm:w-10" alt="" />
                 {isOnline ? (
                   <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#111] bg-emerald-400" />
                 ) : null}
               </div>
             )}
 
-            <div className="ml-3 min-w-0 flex-1">
-              <p className="font-medium text-white">
+            <div className="ml-2.5 min-w-0 flex-1 sm:ml-3">
+              <p className="truncate text-sm font-semibold text-white sm:text-[15px]">
                 {isGroupThread ? selectedRoomChat?.name : selectedUser?.fullName}
               </p>
-              <p className={`text-xs ${isGroupThread ? "text-zinc-400" : isOnline ? "text-emerald-400" : "text-zinc-500"}`}>
+              <p className={`truncate text-[11px] ${isGroupThread ? "text-zinc-400" : isOnline ? "text-emerald-400" : "text-zinc-500"}`}>
                 {isGroupThread
                   ? typingLabel || `${(selectedRoomChat?.members || []).length} members`
                   : peerTyping
@@ -313,7 +306,7 @@ const MessageContainer = () => {
                       : "Last seen recently"}
               </p>
               {groupJamActive ? (
-                <p className="mt-1 text-[10px] text-amber-400/90">
+                <p className="mt-0.5 truncate text-[10px] text-amber-400/90">
                   Group jam active — use Jam rooms to switch or clear.
                 </p>
               ) : null}
@@ -331,7 +324,7 @@ const MessageContainer = () => {
                   className="rounded-full border border-white/10 bg-white/[0.05] p-2 text-zinc-300 transition hover:bg-white/[0.1] hover:text-white"
                   aria-label="Group options"
                 >
-                  <IoEllipsisHorizontal className="text-lg" />
+                  <IoEllipsisHorizontal className="text-base sm:text-lg" />
                 </button>
                 {showGroupMenu ? (
                   <div className="absolute right-0 top-full z-20 mt-2 w-44 rounded-2xl border border-white/10 bg-zinc-950/95 p-1 shadow-2xl backdrop-blur">

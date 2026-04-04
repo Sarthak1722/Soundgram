@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useSocket } from "../context/SocketContext.jsx";
+import { useSocket } from "../context/useSocket.js";
 import {
   receiveSocketMessage,
   applyMessagesRead,
@@ -25,9 +25,12 @@ export function useChatSocket() {
   const authIdRef = useRef(null);
   const peerIdRef = useRef(null);
   const roomIdRef = useRef(null);
-  authIdRef.current = authUser?._id ?? null;
-  peerIdRef.current = selectedUser?._id ?? null;
-  roomIdRef.current = selectedRoomChat?._id ?? null;
+
+  useEffect(() => {
+    authIdRef.current = authUser?._id ?? null;
+    peerIdRef.current = selectedUser?._id ?? null;
+    roomIdRef.current = selectedRoomChat?._id ?? null;
+  }, [authUser?._id, selectedUser?._id, selectedRoomChat?._id]);
 
   useEffect(() => {
     if (!socket) return;

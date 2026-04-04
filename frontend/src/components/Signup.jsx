@@ -1,6 +1,14 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import {
+  IoArrowForward,
+  IoLockClosedOutline,
+  IoPersonOutline,
+  IoSparklesOutline,
+} from "react-icons/io5";
+import AuthShell from "./auth/AuthShell.jsx";
+import { authInputClassName, authLabelClassName } from "./auth/authFormStyles.js";
 import apiClient from "../api/client.js";
 
 const Signup = () => {
@@ -9,9 +17,8 @@ const Signup = () => {
     userName: "",
     password: "",
     confirmPassword: "",
-    gender: "",
   });
-
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -23,142 +30,151 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (
-      !userData.fullName ||
-      !userData.userName ||
-      !userData.password ||
-      !userData.confirmPassword ||
-      !userData.gender
-    ) {
-      return toast.error("All fields are required");
+
+    const { fullName, userName, password, confirmPassword } = userData;
+
+    if (!fullName.trim() || !userName.trim() || !password || !confirmPassword) {
+      toast.error("Fill in all required fields.");
+      return;
     }
+
+    if (password.length < 6) {
+      toast.error("Use at least 6 characters for your password.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    setSubmitting(true);
+
     try {
-      const res = await apiClient.post("/api/v1/user/register", userData);
-      if (res.data.success) {
-        setUserData({
-          fullName: "",
-          userName: "",
-          password: "",
-          confirmPassword: "",
-          gender: "",
-        });
-        toast.success(res.data.message);
-        navigate("/");
-      }
+      const res = await apiClient.post("/api/v1/user/register", {
+        fullName: fullName.trim(),
+        userName: userName.trim(),
+        password,
+        confirmPassword,
+      });
+
+      setUserData({
+        fullName: "",
+        userName: "",
+        password: "",
+        confirmPassword: "",
+      });
+      toast.success(res.data.message || "Account created.");
+      navigate("/", { replace: true });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Something went wrong");
+      toast.error(error.response?.data?.message || "Unable to create your account.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center px-4 py-10">
-      <div className="min-w-96 w-full max-w-md mx-auto">
-      <div className="w-full p-6 rounded-lg shadow-md bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-10 border border-gray-100">
-        <h1 className="text-3xl font-bold text-center text-black-300">
-          Signup
-        </h1>
-        <form action="" onSubmit={handleSubmit}>
-          <div>
-            <label className="label p-2">
-              <span className="text-base label-text">Full Name</span>
-            </label>
+    <AuthShell
+      eyebrow="Create account"
+      title="Start your first jam in minutes."
+      description="Create your profile to unlock synced listening, group rooms, and a more personal home feed."
+      footerPrompt="Already have an account?"
+      footerLinkLabel="Sign in"
+      footerLinkTo="/"
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label htmlFor="fullName" className={authLabelClassName}>
+            Full name
+          </label>
+          <div className="relative">
+            <IoSparklesOutline className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input
-              className="w-full input input-bordered h-10"
+              id="fullName"
+              className={`${authInputClassName} pl-11`}
               type="text"
               name="fullName"
               value={userData.fullName}
               onChange={handleChange}
               autoComplete="name"
+              placeholder="How should people know you?"
             />
           </div>
+        </div>
 
-          <div>
-            <label className="label p-2">
-              <span className="text-base label-text">Username</span>
-            </label>
+        <div>
+          <label htmlFor="userName" className={authLabelClassName}>
+            Username
+          </label>
+          <div className="relative">
+            <IoPersonOutline className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input
-              className="w-full input input-bordered h-10"
+              id="userName"
+              className={`${authInputClassName} pl-11`}
               type="text"
               name="userName"
               value={userData.userName}
               onChange={handleChange}
               autoComplete="username"
+              placeholder="Choose a unique @handle"
             />
           </div>
+        </div>
 
+        <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label className="label p-2">
-              <span className="text-base label-text">Password</span>
+            <label htmlFor="password" className={authLabelClassName}>
+              Password
             </label>
-            <input
-              className="w-full input input-bordered h-10"
-              type="password"
-              name="password"
-              value={userData.password}
-              onChange={handleChange}
-              autoComplete="new-password"
-            />
-          </div>
-
-          <div>
-            <label className="label p-2">
-              <span className="text-base label-text">Confirm Password</span>
-            </label>
-            <input
-              className="w-full input input-bordered h-10"
-              type="password"
-              name="confirmPassword"
-              value={userData.confirmPassword}
-              onChange={handleChange}
-              autoComplete="new-password"
-            />
-          </div>
-
-          <div className="flex items-center my-4">
-            <div className="flex items-center">
-              <p>Male</p>
+            <div className="relative">
+              <IoLockClosedOutline className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
-                type="radio"
-                className="checkbox mx-2"
-                name="gender"
-                value="male"
-                checked={userData.gender === "male"}
+                id="password"
+                className={`${authInputClassName} pl-11`}
+                type="password"
+                name="password"
+                value={userData.password}
                 onChange={handleChange}
-              />
-            </div>
-
-            <div className="flex items-center">
-              <p>Female</p>
-              <input
-                type="radio"
-                className="checkbox mx-2"
-                name="gender"
-                value="female"
-                checked={userData.gender === "female"}
-                onChange={handleChange}
+                autoComplete="new-password"
+                placeholder="Minimum 6 characters"
               />
             </div>
           </div>
 
-          <div className="my-2 flex align-middle">
-            <p className="">Already have an account?</p>
-            <Link to="/" className="mx-4">
-              Login
-            </Link>
-          </div>
-
           <div>
-            <button
-              type="submit"
-              className="btn btn-block btm-sm mt-2 border border-slate-700"
-            >
-              Signup
-            </button>
+            <label htmlFor="confirmPassword" className={authLabelClassName}>
+              Confirm password
+            </label>
+            <div className="relative">
+              <IoLockClosedOutline className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <input
+                id="confirmPassword"
+                className={`${authInputClassName} pl-11`}
+                type="password"
+                name="confirmPassword"
+                value={userData.confirmPassword}
+                onChange={handleChange}
+                autoComplete="new-password"
+                placeholder="Repeat your password"
+              />
+            </div>
           </div>
-        </form>
-      </div>
-      </div>
-    </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-zinc-400">
+          Your profile photo is generated automatically for now, so account creation stays quick and friction-free.
+        </div>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3.5 text-sm font-semibold text-black transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? "Creating account..." : "Create account"}
+          {!submitting ? <IoArrowForward className="text-base" /> : null}
+        </button>
+      </form>
+    </AuthShell>
   );
 };
 

@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import toast from "react-hot-toast";
@@ -14,7 +15,7 @@ import {
   IoPeople,
   IoLogOutOutline,
 } from "react-icons/io5";
-import { setauthUser, setotherUsers, setselectedUser } from "../redux/userSlice.js";
+import { setAuthStatus, setauthUser, setotherUsers, setselectedUser } from "../redux/userSlice.js";
 import { resetThread } from "../redux/messageSlice.js";
 import { resetPlayback } from "../redux/playbackSlice.js";
 import { resetRooms } from "../redux/roomsSlice.js";
@@ -24,32 +25,32 @@ const navItems = [
   {
     to: "home",
     label: "Home",
-    ActiveIcon: IoHome,
-    InactiveIcon: IoHomeOutline,
+    activeIcon: IoHome,
+    inactiveIcon: IoHomeOutline,
   },
   {
     to: "messages",
     label: "Messages",
-    ActiveIcon: IoChatbubbles,
-    InactiveIcon: IoChatbubblesOutline,
+    activeIcon: IoChatbubbles,
+    inactiveIcon: IoChatbubblesOutline,
   },
   {
     to: "rooms",
     label: "Rooms",
-    ActiveIcon: IoPeople,
-    InactiveIcon: IoPeopleOutline,
+    activeIcon: IoPeople,
+    inactiveIcon: IoPeopleOutline,
   },
   {
     to: "liked",
     label: "Songs",
-    ActiveIcon: IoHeart,
-    InactiveIcon: IoHeartOutline,
+    activeIcon: IoHeart,
+    inactiveIcon: IoHeartOutline,
   },
   {
     to: "playlists",
     label: "Playlists",
-    ActiveIcon: IoAlbums,
-    InactiveIcon: IoAlbumsOutline,
+    activeIcon: IoAlbums,
+    inactiveIcon: IoAlbumsOutline,
   },
 ];
 
@@ -61,8 +62,10 @@ const navItemClass = ({ isActive }) =>
       : "text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100",
   ].join(" ");
 
-const NavIcon = ({ active, ActiveIcon, InactiveIcon }) => (
-  <span className="text-xl opacity-90">{active ? <ActiveIcon /> : <InactiveIcon />}</span>
+const NavIcon = ({ active, activeIcon, inactiveIcon }) => (
+  <span className="text-xl opacity-90">
+    {createElement(active ? activeIcon : inactiveIcon)}
+  </span>
 );
 
 const MainNav = ({ variant = "desktop" }) => {
@@ -75,6 +78,7 @@ const MainNav = ({ variant = "desktop" }) => {
       const res = await apiClient.get("/api/v1/user/logout");
       toast.success(res.data?.message);
       dispatch(setauthUser(null));
+      dispatch(setAuthStatus("unauthenticated"));
       dispatch(setselectedUser(null));
       dispatch(setotherUsers([]));
       dispatch(resetThread());
@@ -89,20 +93,20 @@ const MainNav = ({ variant = "desktop" }) => {
 
   if (variant === "mobile") {
     return (
-      <nav className="rounded-[26px] border border-white/10 bg-[#101010]/96 px-2 py-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+      <nav className="rounded-[22px] border border-white/10 bg-[#101010]/96 px-1.5 py-1.5 shadow-[0_18px_48px_rgba(0,0,0,0.42)] backdrop-blur-xl">
         <div className="grid grid-cols-5 gap-1">
-          {navItems.map(({ to, label, ActiveIcon, InactiveIcon }) => (
+          {navItems.map(({ to, label, activeIcon, inactiveIcon }) => (
             <NavLink key={to} to={to} className="min-w-0">
               {({ isActive }) => (
                 <span
-                  className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-semibold tracking-[0.08em] transition ${
+                  className={`flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-[18px] px-1 py-1.5 text-[9px] font-semibold tracking-[0.08em] transition ${
                     isActive
                       ? "bg-white text-black shadow-[0_8px_20px_rgba(255,255,255,0.14)]"
                       : "text-zinc-400"
                   }`}
                 >
-                  <span className="text-[1.2rem]">
-                    {isActive ? <ActiveIcon /> : <InactiveIcon />}
+                  <span className="text-[1.05rem]">
+                    {createElement(isActive ? activeIcon : inactiveIcon)}
                   </span>
                   <span className="truncate">{label}</span>
                 </span>
@@ -129,11 +133,15 @@ const MainNav = ({ variant = "desktop" }) => {
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 px-3">
-        {navItems.map(({ to, label, ActiveIcon, InactiveIcon }) => (
+        {navItems.map(({ to, label, activeIcon, inactiveIcon }) => (
           <NavLink key={to} to={to} className={navItemClass}>
             {({ isActive }) => (
               <>
-                <NavIcon active={isActive} ActiveIcon={ActiveIcon} InactiveIcon={InactiveIcon} />
+                <NavIcon
+                  active={isActive}
+                  activeIcon={activeIcon}
+                  inactiveIcon={inactiveIcon}
+                />
                 {label === "Rooms" ? "Jam rooms" : label}
               </>
             )}

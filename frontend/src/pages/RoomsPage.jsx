@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { IoPeople, IoAddCircleOutline, IoMusicalNotes } from "react-icons/io5";
@@ -21,7 +21,7 @@ const RoomsPage = () => {
     [otherUsers, authUser?._id],
   );
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     try {
       const data = await listRooms();
       dispatch(setRoomsList(data));
@@ -29,11 +29,11 @@ const RoomsPage = () => {
       console.error(e);
       toast.error("Could not load rooms");
     }
-  };
+  }, [dispatch]);
 
   useEffect(() => {
-    refresh();
-  }, []);
+    void refresh();
+  }, [refresh]);
 
   const toggleMember = (id) => {
     setPicked((prev) => {

@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useSocket } from "../context/SocketContext.jsx";
+import { useSocket } from "../context/useSocket.js";
 import { applyPlaybackUpdate, playNext, playPrevious, setPlaybackQueue } from "../redux/playbackSlice.js";
 import { effectivePlaybackTime } from "../utils/playbackTime.js";
 import { getTrackDurationSeconds } from "../utils/trackDuration.js";
@@ -23,9 +23,13 @@ export function usePlaybackSocket() {
   const authUser = useSelector((s) => s.user.authUser);
   const activeJam = useSelector((s) => s.rooms.activeJam);
   const playback = useSelector((s) => s.playback);
+  const authUserId = authUser?._id;
 
   const jamRef = useRef(activeJam);
-  jamRef.current = activeJam;
+
+  useEffect(() => {
+    jamRef.current = activeJam;
+  }, [activeJam]);
 
   useEffect(() => {
     if (!socket) return;
@@ -56,7 +60,7 @@ export function usePlaybackSocket() {
     } else {
       socket.emit("playbackJoin", { roomId: activeJam.roomId });
     }
-  }, [socket, socket?.connected, authUser?._id, key, dispatch]);
+  }, [socket, socket?.connected, authUser?._id, key, activeJam]);
 
   useEffect(() => {
     return () => {
@@ -84,18 +88,18 @@ export function usePlaybackSocket() {
   const optimisticJamPlaybackUpdate = useCallback(
     (patch) => {
       const jam = jamRef.current;
-      if (!jam || !authUser?._id) return;
+      if (!jam || !authUserId) return;
 
       dispatch(
         applyPlaybackUpdate({
           roomId: playback.roomId,
           serverNow: Date.now(),
-          updatedBy: authUser._id,
+          updatedBy: authUserId,
           ...patch,
         }),
       );
     },
-    [authUser?._id, dispatch, playback.roomId],
+    [authUserId, dispatch, playback.roomId],
   );
 
   const emitPlay = useCallback(() => {

@@ -1,16 +1,15 @@
 import mongoose from "mongoose";
 import { User } from "../models/userModel.js";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { broadcastPresenceSnapshots, io } from "../socket/socket.js";
+import { broadcastPresenceSnapshots } from "../socket/socket.js";
 
 dotenv.config({ quiet: true });
 
 export const register = async (req, res) => {
   try {
     const { fullName, userName, password, confirmPassword, gender } = req.body;
-    if (!fullName || !userName || !password || !confirmPassword || !gender) {
+    if (!fullName || !userName || !password || !confirmPassword) {
       return res.status(400).json({ message: "All fields are required." });
     }
     if (password !== confirmPassword) {
@@ -67,6 +66,7 @@ export const register = async (req, res) => {
       .json({ message: "Account Created Successfully", success: true });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: "Failed to create account." });
   }
 };
 
@@ -108,6 +108,7 @@ export const login = async (req, res) => {
       });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: "Failed to login.", success: false });
   }
 };
 
@@ -124,6 +125,32 @@ export const logout = (req, res) => {
     });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: "Failed to logout.", success: false });
+  }
+};
+
+export const getCurrentUser = async (req, res) => {
+  try {
+    if (!req.id || !mongoose.Types.ObjectId.isValid(String(req.id))) {
+      return res.status(401).json({ message: "User not authenticated.", success: false });
+    }
+
+    const user = await User.findById(req.id).select("-password").lean();
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found.", success: false });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        ...user,
+        _id: String(user._id),
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Failed to fetch session.", success: false });
   }
 };
 

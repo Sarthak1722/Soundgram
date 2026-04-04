@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { IoHeart, IoTimeOutline, IoPlay, IoPause, IoTrash, IoArrowBack } from "react-icons/io5";
 import { fetchPlaylist, removeTrackFromPlaylist, deletePlaylist } from "../api/playlistsApi.js";
 import { useSelector } from "react-redux";
-import { usePlaybackActions } from "../components/playback/PlaybackActionsProvider.jsx";
+import { usePlaybackActions } from "../components/playback/usePlaybackActions.js";
 
 const PlaylistDetailPage = () => {
   const { id } = useParams();
@@ -17,11 +17,7 @@ const PlaylistDetailPage = () => {
   const playback = useSelector((s) => s.playback);
   const { emitPlaySelection, emitPlay, emitPause } = usePlaybackActions();
 
-  useEffect(() => {
-    loadPlaylist();
-  }, [id]);
-
-  const loadPlaylist = async () => {
+  const loadPlaylist = useCallback(async () => {
     try {
       setLoading(true);
       const data = await fetchPlaylist(id);
@@ -32,7 +28,11 @@ const PlaylistDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    void loadPlaylist();
+  }, [loadPlaylist]);
 
   const handleRemoveTrack = async (trackId) => {
     if (!playlist) return;

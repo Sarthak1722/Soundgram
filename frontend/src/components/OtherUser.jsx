@@ -17,24 +17,24 @@ const OtherUser = (prop) => {
     <button
       type="button"
       onClick={() => selectedUserHandler(prop.user)}
-      className={`${isSelected ? "bg-white/18 ring-1 ring-white/12" : ""} flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-all ${isSelected ? "hover:bg-white/18" : "hover:bg-white/[0.08]"}`}
+      className={`${isSelected ? "bg-white/18 ring-1 ring-white/12" : "bg-white/[0.03]"} flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left transition-all ${isSelected ? "hover:bg-white/18" : "hover:bg-white/[0.08]"} sm:bg-transparent sm:px-3 sm:py-2.5`}
     >
-      <div className={`avatar ${isOnline ? "avatar-online" : ""}`}>
+      <div className={`avatar shrink-0 ${isOnline ? "avatar-online" : ""}`}>
         <img
           src={prop.user?.profilePhoto}
-          className="h-10 w-10 rounded-full object-cover"
+          className="h-10 w-10 rounded-full object-cover sm:h-9 sm:w-9"
           alt={prop.user?.fullName}
         />
       </div>
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-white">{prop.user?.fullName}</p>
-        <p className={`text-xs ${isOnline ? "text-green-400" : "text-zinc-400"}`}>
+        <p className={`text-[12px] sm:text-xs ${isOnline ? "text-green-400" : "text-zinc-400"}`}>
           {isOnline ? "Online now" : "Last seen recently"}
         </p>
       </div>
 
-      <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+      <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-zinc-500 sm:inline-flex">
         {isSelected ? "open" : "chat"}
       </span>
     </button>

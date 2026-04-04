@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { IoHeart, IoTimeOutline, IoHeartOutline, IoPlay, IoPause } from "react-icons/io5";
 import { useSelector } from "react-redux";
-import { usePlaybackActions } from "../components/playback/PlaybackActionsProvider.jsx";
+import { usePlaybackActions } from "../components/playback/usePlaybackActions.js";
 import { fetchPlaybackTracks } from "../api/playbackApi.js";
 import { fetchUserPlaylists, addTrackToPlaylist } from "../api/playlistsApi.js";
 

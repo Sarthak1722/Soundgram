@@ -8,7 +8,9 @@ import {
   updatePlaylist,
 } from "../api/playlistsApi.js";
 import { fetchPlaybackTracks } from "../api/playbackApi.js";
-import { usePlaybackActions } from "../components/playback/PlaybackActionsProvider.jsx";
+import { usePlaybackActions } from "../components/playback/usePlaybackActions.js";
+
+const ambientLabels = ["Freshly arranged", "Evening-ready", "Replay-safe", "Smooth transitions"];
 
 function PlaylistsPage() {
   const { emitPlaySelection } = usePlaybackActions();
@@ -22,12 +24,10 @@ function PlaylistsPage() {
   const [expandedPlaylistId, setExpandedPlaylistId] = useState(null);
   const [editingPlaylistId, setEditingPlaylistId] = useState(null);
   const [editingName, setEditingName] = useState("");
-  const [savingName, setSavingName] = useState(false);
   const [openMenuPlaylistId, setOpenMenuPlaylistId] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const editInputRef = useRef(null);
   const openMenuRef = useRef(null);
-  const ambientLabels = ["Freshly arranged", "Evening-ready", "Replay-safe", "Smooth transitions"];
 
   useEffect(() => {
     loadData();
@@ -53,6 +53,7 @@ function PlaylistsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
+      setError(null);
       const [playlistsData, tracksData] = await Promise.all([
         fetchUserPlaylists(),
         fetchPlaybackTracks(),
@@ -82,23 +83,6 @@ function PlaylistsPage() {
       setError("Failed to create playlist");
     } finally {
       setCreatingPlaylist(false);
-    }
-  };
-
-  const handleDeletePlaylist = async (playlistId) => {
-    if (!confirm("Are you sure you want to delete this playlist?")) return;
-
-    try {
-      setDeletingPlaylistId(playlistId);
-      const success = await deletePlaylist(playlistId);
-      if (success) {
-        setPlaylists(prev => prev.filter(p => p.id !== playlistId));
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Failed to delete playlist");
-    } finally {
-      setDeletingPlaylistId(null);
     }
   };
 
@@ -144,7 +128,6 @@ function PlaylistsPage() {
       return;
     }
 
-    setSavingName(true);
     try {
       const updated = await updatePlaylist(editingPlaylistId, { name: trimmed });
       if (updated) {
@@ -157,8 +140,6 @@ function PlaylistsPage() {
     } catch (err) {
       console.error(err);
       setError("Failed to rename playlist");
-    } finally {
-      setSavingName(false);
     }
   };
 

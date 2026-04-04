@@ -1,17 +1,8 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { io } from "socket.io-client";
 import { useSelector } from "react-redux";
 import { SOCKET_URL } from "../config/runtime.js";
-
-const SocketContext = createContext(null);
-
-export const useSocket = () => {
-  const ctx = useContext(SocketContext);
-  if (!ctx) {
-    throw new Error("useSocket must be used within SocketProvider");
-  }
-  return ctx;
-};
+import { SocketContext } from "./socketContextInstance.js";
 
 /**
  * One Socket.IO client per logged-in user. Lives in React state only (not Redux).
@@ -20,21 +11,12 @@ export const useSocket = () => {
  */
 export const SocketProvider = ({ children }) => {
   const authUserId = useSelector((store) => store.user.authUser?._id);
-  const [socket, setSocket] = useState(null);
-
-  useEffect(() => {
+  const socket = useMemo(() => {
     if (!authUserId) {
-      setSocket((prev) => {
-        if (prev) {
-          prev.removeAllListeners();
-          prev.disconnect();
-        }
-        return null;
-      });
-      return;
+      return null;
     }
 
-    const instance = io(SOCKET_URL || undefined, {
+    return io(SOCKET_URL || undefined, {
       query: { userId: authUserId },
       transports: ["websocket", "polling"],
       reconnection: true,
@@ -42,14 +24,16 @@ export const SocketProvider = ({ children }) => {
       reconnectionDelay: 1000,
       timeout: 20000,
     });
+  }, [authUserId]);
 
-    setSocket(instance);
+  useEffect(() => {
+    if (!socket) return undefined;
 
     return () => {
-      instance.removeAllListeners();
-      instance.disconnect();
+      socket.removeAllListeners();
+      socket.disconnect();
     };
-  }, [authUserId]);
+  }, [socket]);
 
   return <SocketContext.Provider value={{ socket }}>{children}</SocketContext.Provider>;
 };

@@ -1,18 +1,24 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
-import {setauthUser} from '../redux/userSlice.js';
+import { useLocation, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { IoArrowForward, IoLockClosedOutline, IoPersonOutline } from "react-icons/io5";
+import AuthShell from "./auth/AuthShell.jsx";
+import { authInputClassName, authLabelClassName } from "./auth/authFormStyles.js";
+import { setAuthStatus, setauthUser } from "../redux/userSlice.js";
 import apiClient from "../api/client.js";
-
 
 const Login = () => {
   const [userData, setUserData] = useState({
     userName: "",
     password: "",
   });
+  const [submitting, setSubmitting] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const redirectTo = location.state?.from?.pathname || "/homepage/home";
 
   const handleChange = (e) => {
     setUserData((prev) => ({
@@ -22,81 +28,101 @@ const Login = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // prevents page refresh
-    if(!userData.userName || !userData.password) {
-        return toast.error("All fields are required");
-    }
-    try {
-      const res = await apiClient.post("/api/v1/user/login", userData);
+    e.preventDefault();
 
-      dispatch(setauthUser(res.data));
-      
-      if (res.data.success) {
-        setUserData({
-          userName: "",
-          password: "",
-        });
-        toast.success(res.data.message);
-        navigate("/homepage");
-      }
+    if (!userData.userName.trim() || !userData.password) {
+      toast.error("Enter both your username and password.");
+      return;
+    }
+
+    setSubmitting(true);
+    dispatch(setAuthStatus("checking"));
+
+    try {
+      const res = await apiClient.post("/api/v1/user/login", {
+        userName: userData.userName.trim(),
+        password: userData.password,
+      });
+
+      dispatch(
+        setauthUser({
+          _id: res.data._id,
+          userName: res.data.userName,
+          fullName: res.data.fullName,
+          profilePhoto: res.data.profilePhoto,
+        }),
+      );
+      dispatch(setAuthStatus("authenticated"));
+      setUserData({ userName: "", password: "" });
+      toast.success(res.data.message || "Welcome back.");
+      navigate(redirectTo, { replace: true });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Something went wrong");
+      dispatch(setauthUser(null));
+      dispatch(setAuthStatus("unauthenticated"));
+      toast.error(error.response?.data?.message || "Unable to sign you in.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center px-4 py-10">
-      <div className="min-w-96 w-full max-w-md mx-auto">
-      <div className="w-full p-6 rounded-lg shadow-md bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-10 border border-gray-100">
-        <h1 className="text-3xl font-bold text-center text-black-300">Login</h1>
-        <form action="" onSubmit={handleSubmit}>
-          <div>
-            <label className="label p-2">
-              <span className="text-base label-text">Username</span>
-            </label>
+    <AuthShell
+      eyebrow="Welcome back"
+      title="Sign in to your listening world."
+      description="Pick up your conversations, playlists, and live jam sessions exactly where you left them."
+      footerPrompt="New here?"
+      footerLinkLabel="Create an account"
+      footerLinkTo="/register"
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label htmlFor="userName" className={authLabelClassName}>
+            Username
+          </label>
+          <div className="relative">
+            <IoPersonOutline className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input
-              className="w-full input input-bordered h-10"
+              id="userName"
+              className={`${authInputClassName} pl-11`}
               type="text"
               name="userName"
               value={userData.userName}
-              autoComplete="userName"
+              autoComplete="username"
               onChange={handleChange}
+              placeholder="Enter your username"
             />
           </div>
+        </div>
 
-          <div>
-            <label className="label p-2">
-              <span className="text-base label-text">Password</span>
-            </label>
+        <div>
+          <label htmlFor="password" className={authLabelClassName}>
+            Password
+          </label>
+          <div className="relative">
+            <IoLockClosedOutline className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input
-              className="w-full input input-bordered h-10"
+              id="password"
+              className={`${authInputClassName} pl-11`}
               type="password"
               name="password"
               value={userData.password}
-              autoComplete="new-password"
+              autoComplete="current-password"
               onChange={handleChange}
+              placeholder="Enter your password"
             />
           </div>
+        </div>
 
-          <div className="my-2 flex align-middle">
-            <p className="">Don't have an account?</p>
-            <Link to="/register" className="mx-4">
-              Signup
-            </Link>
-          </div>
-
-          <div className="my-1">
-            <button
-              type="submit"
-              className="btn btn-block btm-sm mt-2 border border-slate-700"
-            >
-              Login
-            </button>
-          </div>
-        </form>
-      </div>
-      </div>
-    </div>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3.5 text-sm font-semibold text-black transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? "Signing in..." : "Sign in"}
+          {!submitting ? <IoArrowForward className="text-base" /> : null}
+        </button>
+      </form>
+    </AuthShell>
   );
 };
 

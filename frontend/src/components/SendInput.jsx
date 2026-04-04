@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { IoSend } from "react-icons/io5";
 import { useSelector, useDispatch } from "react-redux";
 import toast from "react-hot-toast";
 import { sendChatMessage, sendGroupChatMessage } from "../api/messagesApi.js";
 import { addOptimisticMessage, removeOptimisticMessage } from "../redux/messageSlice.js";
-import { useSocket } from "../context/SocketContext.jsx";
+import { useSocket } from "../context/useSocket.js";
 import { normalizeUserId } from "../utils/messageConversation.js";
 
 const TYPING_IDLE_MS = 1800;
@@ -23,7 +23,7 @@ const SendInput = () => {
   const typingTimer = useRef(null);
   const isGroupThread = Boolean(selectedRoomChat?._id);
 
-  const flushStopTyping = () => {
+  const flushStopTyping = useCallback(() => {
     if (!socket) return;
     if (isGroupThread && selectedRoomChat?._id) {
       socket.emit("stopGroupTyping", {
@@ -34,14 +34,14 @@ const SendInput = () => {
     }
     if (!selectedUser?._id) return;
     socket.emit("stopTyping", { toUserId: String(selectedUser._id) });
-  };
+  }, [authUser?.fullName, isGroupThread, selectedRoomChat?._id, selectedUser?._id, socket]);
 
   useEffect(() => {
     return () => {
       if (typingTimer.current) clearTimeout(typingTimer.current);
       flushStopTyping();
     };
-  }, []);
+  }, [flushStopTyping]);
 
   useEffect(() => {
     setMessage("");
@@ -114,7 +114,7 @@ const SendInput = () => {
   return (
     <form
       onSubmit={onSubmitHandler}
-      className="mx-1 mb-1.5 mt-1 flex gap-2 rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(19,19,20,0.98),rgba(13,13,14,0.96))] px-3 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:mx-4 sm:mb-4 sm:mt-3 sm:gap-3 sm:px-4 sm:py-4"
+      className="mx-2 mb-2 mt-1 flex gap-2 rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(19,19,20,0.98),rgba(13,13,14,0.96))] px-2.5 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:mx-4 sm:mb-4 sm:mt-2 sm:gap-3 sm:px-3.5 sm:py-3"
     >
       <input
         placeholder={
@@ -127,12 +127,12 @@ const SendInput = () => {
         className="
         w-full
         px-4
-        py-3
-        rounded-2xl
+        py-2.5
+        rounded-[20px]
         bg-black/35
         backdrop-blur-3xl
         border border-white/10
-        text-sm
+        text-[15px]
         text-white
         focus:outline-none
         focus:ring-2
@@ -156,9 +156,9 @@ const SendInput = () => {
           type="submit"
           disabled={sending}
           className="
-          px-4
-          py-3
-          rounded-2xl
+          px-3.5
+          py-2.5
+          rounded-[18px]
           bg-linear-to-r
           from-emerald-500
           to-green-600

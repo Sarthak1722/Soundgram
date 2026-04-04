@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { effectivePlaybackTime } from "../utils/playbackTime.js";
 import { getTrackDurationSeconds } from "../utils/trackDuration.js";
 
@@ -32,28 +32,12 @@ export function usePlaybackTimeline(playback, audioDuration, onSeekCommit) {
     : clampTime(liveTime, durationSeconds);
   const maxDuration = durationSeconds > 0 ? durationSeconds : 1;
 
-  useEffect(() => {
-    if (isSeeking) return;
-    setSeekValue(null);
-    pendingSeekRef.current = null;
-  }, [
-    isSeeking,
-    playback?.currentTrack?.id,
-    playback?.positionSeconds,
-    playback?.playheadEpochMs,
-    playback?.serverNow,
-    playback?.updatedBy,
-  ]);
-
   const beginSeeking = useCallback(() => {
     setIsSeeking(true);
-    const nextValue = clampTime(
-      pendingSeekRef.current ?? seekValue ?? liveTime,
-      durationSeconds,
-    );
+    const nextValue = clampTime(pendingSeekRef.current ?? liveTime, durationSeconds);
     pendingSeekRef.current = nextValue;
     setSeekValue(nextValue);
-  }, [durationSeconds, liveTime, seekValue]);
+  }, [durationSeconds, liveTime]);
 
   const updateSeeking = useCallback((nextValue) => {
     const clamped = clampTime(nextValue, durationSeconds);

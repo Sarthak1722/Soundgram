@@ -13,9 +13,7 @@ export function fullAudioUrl(urlPath) {
  */
 export function usePlaybackAudioSync(audioRef) {
   const playback = useSelector((s) => s.playback);
-  const playbackRef = useRef(playback);
   const lastSyncStampRef = useRef(null);
-  playbackRef.current = playback;
 
   const currentTrack = playback.currentTrack;
   const isPlaying = playback.isPlaying;
@@ -44,12 +42,12 @@ export function usePlaybackAudioSync(audioRef) {
     }
 
     const syncElement = () => {
-      const t = effectivePlaybackTime(playbackRef.current);
+      const t = effectivePlaybackTime(playback);
       const clampedTime =
         Number.isFinite(trackDurationSeconds) && trackDurationSeconds > 0
           ? Math.min(t, trackDurationSeconds)
           : t;
-      const syncStamp = `${playbackRef.current.serverNow ?? "local"}:${playbackRef.current.positionSeconds}:${playbackRef.current.isPlaying ? 1 : 0}`;
+      const syncStamp = `${playback.serverNow ?? "local"}:${playback.positionSeconds}:${playback.isPlaying ? 1 : 0}`;
 
       if (
         Number.isFinite(clampedTime) &&
@@ -59,7 +57,7 @@ export function usePlaybackAudioSync(audioRef) {
         el.currentTime = clampedTime;
         lastSyncStampRef.current = syncStamp;
       }
-      if (playbackRef.current.isPlaying) {
+      if (playback.isPlaying) {
         el.play().catch(() => {});
       } else {
         el.pause();
@@ -85,5 +83,6 @@ export function usePlaybackAudioSync(audioRef) {
     playheadEpochMs,
     serverNow,
     trackDurationSeconds,
+    playback,
   ]);
 }
