@@ -11,6 +11,7 @@ function normalizeTrack(track) {
     trackId: track.trackId ?? track.id ?? track._id ?? null,
     title: track.title ?? "",
     artist: track.artist ?? "",
+    album: track.album ?? "",
     url: track.url ?? "",
     duration: track.duration ?? "",
     durationSeconds: track.durationSeconds ?? null,

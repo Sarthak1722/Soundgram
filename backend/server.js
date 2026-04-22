@@ -10,6 +10,8 @@ import messageRoute from "./routes/messageRoute.js";
 import playbackRoute from "./routes/playbackRoute.js";
 import roomRoute from "./routes/roomRoute.js";
 import playlistRoute from "./routes/playlistRoute.js";
+import postRoute from "./routes/postRoute.js";
+import notificationRoute from "./routes/notificationRoute.js";
 import { server, app } from "./socket/socket.js";
 
 dotenv.config({ quiet: true });
@@ -32,6 +34,8 @@ app.use("/api/v1/message", messageRoute);
 app.use("/api/v1/playback", playbackRoute);
 app.use("/api/v1/rooms", roomRoute);
 app.use("/api/v1/playlists", playlistRoute);
+app.use("/api/v1/posts", postRoute);
+app.use("/api/v1/notifications", notificationRoute);
 
 app.use("/api", (_req, res) => {
   res.status(404).json({ message: "API route not found" });

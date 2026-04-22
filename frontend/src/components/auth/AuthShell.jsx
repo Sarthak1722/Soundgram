@@ -3,13 +3,13 @@ import { IoHeadset, IoPulse, IoSparkles } from "react-icons/io5";
 
 const featureItems = [
   "Realtime chat with presence, typing, and read receipts",
-  "Shared music playback for DMs and group jam rooms",
+  "Shared music playback for DMs and private group jams",
   "Playlists, mood-driven discovery, and a persistent player",
 ];
 
 const statItems = [
   { label: "Live chats", value: "Instant" },
-  { label: "Jam rooms", value: "Synced" },
+  { label: "Group jams", value: "Synced" },
   { label: "Mood", value: "Cinematic" },
 ];
 
@@ -59,7 +59,7 @@ const AuthShell = ({
                 Where chats turn into live listening sessions.
               </h1>
               <p className="mt-4 max-w-xl text-base leading-8 text-zinc-300">
-                Jamify blends direct messages, group rooms, playlists, and synchronized playback into
+                Jamify blends direct messages, private group chats, playlists, and synchronized playback into
                 one polished place to hang out.
               </p>
 

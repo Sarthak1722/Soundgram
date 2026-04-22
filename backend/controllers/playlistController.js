@@ -2,12 +2,19 @@ import { Playlist } from "../models/playlistModel.js";
 import { User } from "../models/userModel.js";
 import { parseTrackDurationSeconds, trackById } from "../playback/trackCatalog.js";
 
+const firstNonEmptyString = (...values) => {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+};
+
 const serializeTrack = (track) => {
   const catalogTrack = trackById(track.trackId);
-  const duration =
-    track.duration ??
-    catalogTrack?.duration ??
-    "";
+  const duration = firstNonEmptyString(track.duration, catalogTrack?.duration);
   const durationSeconds =
     parseTrackDurationSeconds(track.durationSeconds) ??
     parseTrackDurationSeconds(track.duration) ??
@@ -17,9 +24,10 @@ const serializeTrack = (track) => {
     trackId: track.trackId,
     id: track.trackId,
     _id: track.trackId,
-    title: track.title,
-    artist: track.artist,
-    url: track.url,
+    title: firstNonEmptyString(track.title, catalogTrack?.title),
+    artist: firstNonEmptyString(track.artist, catalogTrack?.artist),
+    album: firstNonEmptyString(track.album, catalogTrack?.album),
+    url: firstNonEmptyString(track.url, catalogTrack?.url, catalogTrack?.file ? `/songs/${catalogTrack.file}` : ""),
     duration,
     durationSeconds,
     addedAt: track.addedAt,
@@ -253,17 +261,24 @@ export const addTrackToPlaylist = async (req, res) => {
     }
 
     const { id } = req.params;
-    const { trackId, title, artist, url, duration, durationSeconds } = req.body;
+    const { trackId, title, artist, album, url, duration, durationSeconds } = req.body;
     const userId = req.id;
 
-    if (!trackId || !title || !artist || !url) {
+    if (!trackId) {
+      return res.status(400).json({
+        success: false,
+        message: "Track ID is required",
+      });
+    }
+
+    const catalogTrack = trackById(trackId);
+
+    if (!firstNonEmptyString(title, catalogTrack?.title) || !firstNonEmptyString(artist, catalogTrack?.artist) || !firstNonEmptyString(url, catalogTrack?.url, catalogTrack?.file ? `/songs/${catalogTrack.file}` : "")) {
       return res.status(400).json({
         success: false,
         message: "Track details are required",
       });
     }
-
-    const catalogTrack = trackById(trackId);
 
     // Check if track already exists in playlist
     const playlist = await Playlist.findOne({ _id: id, userId });
@@ -284,10 +299,11 @@ export const addTrackToPlaylist = async (req, res) => {
 
     playlist.tracks.push({
       trackId,
-      title,
-      artist,
-      url,
-      duration: duration ?? catalogTrack?.duration ?? "",
+      title: firstNonEmptyString(title, catalogTrack?.title),
+      artist: firstNonEmptyString(artist, catalogTrack?.artist),
+      album: firstNonEmptyString(album, catalogTrack?.album),
+      url: firstNonEmptyString(url, catalogTrack?.url, catalogTrack?.file ? `/songs/${catalogTrack.file}` : ""),
+      duration: firstNonEmptyString(duration, catalogTrack?.duration),
       durationSeconds:
         parseTrackDurationSeconds(durationSeconds) ??
         parseTrackDurationSeconds(duration) ??

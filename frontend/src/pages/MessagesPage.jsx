@@ -3,21 +3,24 @@ import { useDispatch } from "react-redux";
 import ChatSidebar from "../components/ChatSidebar.jsx";
 import MessageContainer from "../components/MessageContainer.jsx";
 import useGetOtherUsers from "../hooks/useGetOtherUsers.jsx";
-import { listRooms } from "../api/roomsApi.js";
-import { setRoomsList } from "../redux/roomsSlice.js";
+import { clearSelectedRoomChat, setRoomsList } from "../redux/roomsSlice.js";
 import { useSelector } from "react-redux";
+import { listRooms } from "../api/roomsApi.js";
 
 const MessagesPage = () => {
   const dispatch = useDispatch();
   const selectedUser = useSelector((store) => store.user.selectedUser);
-  const selectedRoomChat = useSelector((store) => store.rooms.selectedRoomChat);
-  const hasOpenThread = Boolean(selectedUser?._id || selectedRoomChat?._id);
+  const hasOpenThread = Boolean(selectedUser?._id);
   useGetOtherUsers();
+
+  useEffect(() => {
+    dispatch(clearSelectedRoomChat());
+  }, [dispatch]);
 
   useEffect(() => {
     let cancelled = false;
 
-    (async () => {
+    const loadRooms = async () => {
       try {
         const rooms = await listRooms();
         if (!cancelled) {
@@ -26,7 +29,9 @@ const MessagesPage = () => {
       } catch (error) {
         console.error("Failed to load rooms", error);
       }
-    })();
+    };
+
+    void loadRooms();
 
     return () => {
       cancelled = true;

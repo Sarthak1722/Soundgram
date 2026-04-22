@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Conversation } from "../models/conversationModel.js";
 import { Message } from "../models/messageModel.js";
 import { GroupRoom } from "../models/groupRoomModel.js";
+import { User } from "../models/userModel.js";
 import {
   emitNewMessageToParticipants,
   emitNewGroupMessageToRoom,
@@ -33,6 +34,21 @@ async function findAuthorizedRoom(roomId, userId) {
   }).select("_id name members").lean();
 }
 
+async function usersCanDirectMessage(senderId, receiverId) {
+  if (!mongoose.Types.ObjectId.isValid(String(senderId)) || !mongoose.Types.ObjectId.isValid(String(receiverId))) {
+    return false;
+  }
+
+  const sender = await User.findOne({
+    _id: senderId,
+    friends: receiverId,
+  })
+    .select("_id")
+    .lean();
+
+  return Boolean(sender);
+}
+
 export const sendMessage = async (req, res) => {
   try {
     const senderID = new mongoose.Types.ObjectId(String(req.id));
@@ -41,6 +57,10 @@ export const sendMessage = async (req, res) => {
 
     if (!message || !String(message).trim()) {
       return res.status(400).json({ message: "Message is required" });
+    }
+
+    if (!(await usersCanDirectMessage(senderID, receiverID))) {
+      return res.status(403).json({ message: "Add this user as a friend before sending a message" });
     }
 
     let gotConversation = await Conversation.findOne({
@@ -94,6 +114,10 @@ export const getMessage = async (req, res) => {
       Math.max(parseInt(String(req.query.limit || DEFAULT_LIMIT), 10) || DEFAULT_LIMIT, 1),
       MAX_LIMIT,
     );
+
+    if (!(await usersCanDirectMessage(senderID, receiverID))) {
+      return res.status(403).json({ message: "Add this user as a friend before opening the conversation" });
+    }
 
     const baseFilter = participantThreadFilter(senderID, receiverID);
     const filter = { ...baseFilter };

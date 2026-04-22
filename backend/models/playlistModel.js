@@ -31,6 +31,10 @@ const playlistModel = new mongoose.Schema(
           type: String,
           required: true,
         },
+        album: {
+          type: String,
+          default: "",
+        },
         url: {
           type: String,
           required: true,

@@ -1,10 +1,22 @@
-import { readFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const songsDirectoryPath = join(__dirname, "../public/songs");
+const trackCatalogPath = join(songsDirectoryPath, "tracks.json");
 
 let cached = null;
+
+function ensureTrackCatalog() {
+  if (!existsSync(songsDirectoryPath)) {
+    mkdirSync(songsDirectoryPath, { recursive: true });
+  }
+
+  if (!existsSync(trackCatalogPath)) {
+    writeFileSync(trackCatalogPath, JSON.stringify({ tracks: [] }, null, 2));
+  }
+}
 
 export function parseTrackDurationSeconds(duration) {
   if (typeof duration === "number" && Number.isFinite(duration)) {
@@ -33,13 +45,29 @@ export function parseTrackDurationSeconds(duration) {
 export function loadTrackCatalog() {
   if (cached) return cached;
   try {
-    const raw = readFileSync(join(__dirname, "../public/songs/tracks.json"), "utf8");
+    ensureTrackCatalog();
+    const raw = readFileSync(trackCatalogPath, "utf8");
     const data = JSON.parse(raw);
     cached = Array.isArray(data.tracks) ? data.tracks : [];
   } catch {
     cached = [];
   }
   return cached;
+}
+
+export function saveTrackCatalog(tracks) {
+  ensureTrackCatalog();
+  const nextTracks = Array.isArray(tracks) ? tracks : [];
+  cached = nextTracks;
+  writeFileSync(trackCatalogPath, JSON.stringify({ tracks: nextTracks }, null, 2));
+  return nextTracks;
+}
+
+export function appendTrackCatalogEntry(track) {
+  const tracks = loadTrackCatalog().filter((entry) => entry?.id !== track?.id);
+  tracks.unshift(track);
+  saveTrackCatalog(tracks);
+  return track;
 }
 
 export function trackById(id) {
@@ -55,6 +83,8 @@ export function toPlaybackTrack(track) {
     album: track.album,
     duration: track.duration,
     durationSeconds: parseTrackDurationSeconds(track.duration),
-    url: `/songs/${track.file}`,
+    url: track.url || `/songs/${track.file}`,
   };
 }
+
+export { songsDirectoryPath, trackCatalogPath };

@@ -53,7 +53,7 @@ function isPlainPopulatedDoc(value) {
 }
 
 async function loadAllUsers() {
-  return User.find({}).select("-password").lean();
+  return User.find({}).select("fullName userName profilePhoto gender").lean();
 }
 
 export async function emitPresenceSnapshotToSocket(socket, userId, allUsers = null) {

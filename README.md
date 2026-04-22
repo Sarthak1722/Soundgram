@@ -2,6 +2,10 @@
 
 Full-stack demo: **JWT auth**, **REST + cookies**, **MongoDB**, **Socket.IO** for real-time **messages**, **typing**, **read receipts**, and **shared music playback** (1:1 or **group jam rooms**). Audio plays **only in the browser**; the server holds playback state and broadcasts updates.
 
+Media posts now use a smarter split:
+- **MongoDB** for post metadata
+- **Cloudinary** for actual image/video storage and delivery
+
 ---
 
 ## Quick start
@@ -17,6 +21,7 @@ npm run dev
 
 - Serves HTTP + Socket.IO on `PORT` (binds `0.0.0.0` for LAN).
 - Static MP3s: add files under `backend/public/songs/` to match `tracks.json`.
+- Cloud posts require `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in `backend/.env`.
 
 ### Frontend
 
@@ -37,6 +42,7 @@ backend/
   controllers/    # HTTP handlers (user, message, playback, rooms)
   middleware/       # isAuthenticated (JWT from cookie)
   models/           # Mongoose: User, Message, Conversation, GroupRoom
+  models/postModel.js
   playback/         # In-memory playback state + socket wiring + track catalog loader
   public/songs/     # tracks.json + .mp3 files (served at /songs)
   routes/           # Express routers mounted under /api/v1/*
@@ -160,6 +166,8 @@ Mounted once inside **`PlaybackActionsProvider`** (see `Homepage.jsx`).
 | GET | `/api/v1/playback/tracks` | Yes — static catalog URLs |
 | GET/POST | `/api/v1/rooms` | Yes — list / create group room |
 | GET | `/api/v1/rooms/:id` | Yes — detail if member |
+| GET | `/api/v1/posts/me` | Yes — logged-in user posts |
+| POST | `/api/v1/posts` | Yes — create image/video post via Cloudinary |
 
 ---
 

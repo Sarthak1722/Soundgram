@@ -29,13 +29,14 @@ const OtherUser = (prop) => {
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-white">{prop.user?.fullName}</p>
-        <p className={`text-[12px] sm:text-xs ${isOnline ? "text-green-400" : "text-zinc-400"}`}>
-          {isOnline ? "Online now" : "Last seen recently"}
+        <p className="truncate text-[12px] text-zinc-500 sm:text-xs">@{prop.user?.userName}</p>
+        <p className={`mt-0.5 text-[11px] sm:text-xs ${isOnline ? "text-green-400" : "text-zinc-400"}`}>
+          {isOnline ? "Online now" : "Friend"}
         </p>
       </div>
 
       <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-zinc-500 sm:inline-flex">
-        {isSelected ? "open" : "chat"}
+        {isSelected ? "open" : "dm"}
       </span>
     </button>
   );

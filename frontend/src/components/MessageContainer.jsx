@@ -29,6 +29,7 @@ import {
   updateRoom as updateRoomApi,
   updateRoomAdmin as updateRoomAdminApi,
 } from "../api/roomsApi.js";
+import { filterFriendUsers } from "../utils/socialGraph.js";
 
 const MessageContainer = () => {
   const dispatch = useDispatch();
@@ -55,11 +56,16 @@ const MessageContainer = () => {
     isGroupThread &&
     (isGroupCreator ||
       (selectedRoomChat?.admins || []).some((adminId) => String(adminId) === String(authUser?._id)));
+  const friendUsers = useMemo(() => filterFriendUsers(otherUsers, authUser), [otherUsers, authUser]);
+  const availableFriends = useMemo(
+    () => (friendUsers.length ? friendUsers : authUser?.friends || []),
+    [friendUsers, authUser?.friends],
+  );
   const selectableMembers = useMemo(() => {
     if (!selectedRoomChat?._id) return [];
     const currentMemberIds = new Set((selectedRoomChat.members || []).map((member) => String(member._id)));
-    return (otherUsers || []).filter((user) => !currentMemberIds.has(String(user._id)));
-  }, [otherUsers, selectedRoomChat]);
+    return availableFriends.filter((user) => !currentMemberIds.has(String(user._id)));
+  }, [availableFriends, selectedRoomChat]);
 
   const jamWithThisDm =
     activeJam?.kind === "dm" &&
@@ -307,7 +313,7 @@ const MessageContainer = () => {
               </p>
               {groupJamActive ? (
                 <p className="mt-0.5 truncate text-[10px] text-amber-400/90">
-                  Group jam active — use Jam rooms to switch or clear.
+                  Group jam active — switch from your group chats or clear it here.
                 </p>
               ) : null}
             </div>
@@ -446,7 +452,7 @@ const MessageContainer = () => {
             Hi, {authUser?.fullName}
           </h1>
           <p className="max-w-sm text-sm leading-relaxed text-zinc-400">
-            Choose someone from your inbox to start messaging. Your chats stay on this screen only.
+            Choose one of your added friends from the inbox to start messaging. Direct chats are limited to your friend list now.
           </p>
           <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-500">

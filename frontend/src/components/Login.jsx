@@ -45,12 +45,14 @@ const Login = () => {
       });
 
       dispatch(
-        setauthUser({
-          _id: res.data._id,
-          userName: res.data.userName,
-          fullName: res.data.fullName,
-          profilePhoto: res.data.profilePhoto,
-        }),
+        setauthUser(
+          res.data.user || {
+            _id: res.data._id,
+            userName: res.data.userName,
+            fullName: res.data.fullName,
+            profilePhoto: res.data.profilePhoto,
+          },
+        ),
       );
       dispatch(setAuthStatus("authenticated"));
       setUserData({ userName: "", password: "" });

@@ -1,6 +1,14 @@
 {
   "tracks": [
     {
+      "id": "track-2f68e367-8f8d-4ea3-a17d-dd579db542f7",
+      "title": "Beauty and a Beat",
+      "artist": "Justin Bieber",
+      "album": "Believe (2012)",
+      "duration": "3:49",
+      "file": "1776824942164-beauty-and-a-beat.mp3"
+    },
+    {
       "id": "local-1",
       "title": "Raabta",
       "artist": "Arijit Singh",

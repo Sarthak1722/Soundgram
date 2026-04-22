@@ -77,7 +77,7 @@ const Signup = () => {
     <AuthShell
       eyebrow="Create account"
       title="Start your first jam in minutes."
-      description="Create your profile to unlock synced listening, group rooms, and a more personal home feed."
+      description="Create your profile to unlock synced listening, private group jams, and a more personal home feed."
       footerPrompt="Already have an account?"
       footerLinkLabel="Sign in"
       footerLinkTo="/"

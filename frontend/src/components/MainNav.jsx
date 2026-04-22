@@ -1,18 +1,22 @@
-import { createElement } from "react";
+import { createElement, useEffect, useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import toast from "react-hot-toast";
 import {
   IoHomeOutline,
   IoHome,
+  IoSearchOutline,
+  IoSearch,
+  IoNotificationsOutline,
+  IoNotifications,
   IoChatbubblesOutline,
   IoChatbubbles,
-  IoHeartOutline,
-  IoHeart,
+  IoMusicalNotesOutline,
+  IoMusicalNotes,
+  IoPersonCircleOutline,
+  IoPersonCircle,
   IoAlbumsOutline,
   IoAlbums,
-  IoPeopleOutline,
-  IoPeople,
   IoLogOutOutline,
 } from "react-icons/io5";
 import { setAuthStatus, setauthUser, setotherUsers, setselectedUser } from "../redux/userSlice.js";
@@ -29,28 +33,40 @@ const navItems = [
     inactiveIcon: IoHomeOutline,
   },
   {
+    to: "search",
+    label: "Search",
+    activeIcon: IoSearch,
+    inactiveIcon: IoSearchOutline,
+  },
+  {
+    to: "notifications",
+    label: "Alerts",
+    activeIcon: IoNotifications,
+    inactiveIcon: IoNotificationsOutline,
+  },
+  {
     to: "messages",
     label: "Messages",
     activeIcon: IoChatbubbles,
     inactiveIcon: IoChatbubblesOutline,
   },
   {
-    to: "rooms",
-    label: "Rooms",
-    activeIcon: IoPeople,
-    inactiveIcon: IoPeopleOutline,
-  },
-  {
-    to: "liked",
+    to: "songs",
     label: "Songs",
-    activeIcon: IoHeart,
-    inactiveIcon: IoHeartOutline,
+    activeIcon: IoMusicalNotes,
+    inactiveIcon: IoMusicalNotesOutline,
   },
   {
     to: "playlists",
     label: "Playlists",
     activeIcon: IoAlbums,
     inactiveIcon: IoAlbumsOutline,
+  },
+  {
+    to: "profile",
+    label: "Profile",
+    activeIcon: IoPersonCircle,
+    inactiveIcon: IoPersonCircleOutline,
   },
 ];
 
@@ -72,6 +88,28 @@ const MainNav = ({ variant = "desktop" }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { authUser } = useSelector((store) => store.user);
+  const [isCompactMobile, setIsCompactMobile] = useState(() =>
+    typeof window === "undefined" ? false : window.innerWidth < 390,
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const handleResize = () => {
+      setIsCompactMobile(window.innerWidth < 390);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const mobileNavItems = useMemo(() => {
+    if (!isCompactMobile) {
+      return navItems;
+    }
+
+    return navItems.filter((item) => item.to !== "notifications" && item.to !== "playlists");
+  }, [isCompactMobile]);
 
   const logoutHandler = async () => {
     try {
@@ -94,8 +132,11 @@ const MainNav = ({ variant = "desktop" }) => {
   if (variant === "mobile") {
     return (
       <nav className="rounded-[22px] border border-white/10 bg-[#101010]/96 px-1.5 py-1.5 shadow-[0_18px_48px_rgba(0,0,0,0.42)] backdrop-blur-xl">
-        <div className="grid grid-cols-5 gap-1">
-          {navItems.map(({ to, label, activeIcon, inactiveIcon }) => (
+        <div
+          className="grid gap-1"
+          style={{ gridTemplateColumns: `repeat(${mobileNavItems.length}, minmax(0, 1fr))` }}
+        >
+          {mobileNavItems.map(({ to, label, activeIcon, inactiveIcon }) => (
             <NavLink key={to} to={to} className="min-w-0">
               {({ isActive }) => (
                 <span
@@ -137,12 +178,8 @@ const MainNav = ({ variant = "desktop" }) => {
           <NavLink key={to} to={to} className={navItemClass}>
             {({ isActive }) => (
               <>
-                <NavIcon
-                  active={isActive}
-                  activeIcon={activeIcon}
-                  inactiveIcon={inactiveIcon}
-                />
-                {label === "Rooms" ? "Jam rooms" : label}
+                <NavIcon active={isActive} activeIcon={activeIcon} inactiveIcon={inactiveIcon} />
+                {label}
               </>
             )}
           </NavLink>
@@ -150,7 +187,10 @@ const MainNav = ({ variant = "desktop" }) => {
       </nav>
 
       <div className="mt-auto border-t border-white/[0.06] p-3">
-        <div className="mb-3 flex items-center gap-3 rounded-xl bg-white/[0.04] px-3 py-2">
+        <NavLink
+          to="profile"
+          className="mb-3 flex items-center gap-3 rounded-xl bg-white/[0.04] px-3 py-2 transition hover:bg-white/[0.08]"
+        >
           <img
             src={authUser?.profilePhoto}
             alt=""
@@ -160,7 +200,7 @@ const MainNav = ({ variant = "desktop" }) => {
             <p className="truncate text-sm font-medium text-white">{authUser?.fullName}</p>
             <p className="truncate text-xs text-zinc-500">@{authUser?.userName}</p>
           </div>
-        </div>
+        </NavLink>
         <button
           type="button"
           onClick={logoutHandler}

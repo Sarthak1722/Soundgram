@@ -25,6 +25,11 @@ async function populateRoom(roomId) {
     .lean();
 }
 
+async function loadFriendIdSet(userId) {
+  const user = await User.findById(userId).select("friends").lean();
+  return new Set((user?.friends || []).map((friendId) => String(friendId)));
+}
+
 export const createRoom = async (req, res) => {
   try {
     const me = req.id;
@@ -36,6 +41,12 @@ export const createRoom = async (req, res) => {
     const members = uniqueIds([me, ...others]);
     if (members.length < 2) {
       return res.status(400).json({ message: "Add at least one other person to the room" });
+    }
+
+    const friendIds = await loadFriendIdSet(me);
+    const nonFriendIds = others.filter((id) => !friendIds.has(String(id)));
+    if (nonFriendIds.length) {
+      return res.status(403).json({ message: "You can only create group chats with added friends" });
     }
 
     for (const id of members) {
@@ -183,6 +194,12 @@ export const addRoomMembers = async (req, res) => {
     const uniqueMemberIds = uniqueIds(memberIds);
     if (!uniqueMemberIds.length) {
       return res.status(400).json({ message: "Pick at least one member to add" });
+    }
+
+    const friendIds = await loadFriendIdSet(req.id);
+    const nonFriendIds = uniqueMemberIds.filter((memberId) => !friendIds.has(String(memberId)));
+    if (nonFriendIds.length) {
+      return res.status(403).json({ message: "You can only add friends to this group" });
     }
 
     for (const memberId of uniqueMemberIds) {

@@ -14,11 +14,13 @@ const Homepage = lazy(() => import("./components/Homepage.jsx"));
 const Signup = lazy(() => import("./components/Signup.jsx"));
 const Login = lazy(() => import("./components/Login.jsx"));
 const DiscoverPage = lazy(() => import("./pages/DiscoverPage.jsx"));
+const SearchPage = lazy(() => import("./pages/SearchPage.jsx"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage.jsx"));
 const MessagesPage = lazy(() => import("./pages/MessagesPage.jsx"));
 const LikedMusicPage = lazy(() => import("./pages/LikedMusicPage.jsx"));
 const PlaylistsPage = lazy(() => import("./pages/PlaylistsPage.jsx"));
 const PlaylistDetailPage = lazy(() => import("./pages/PlaylistDetailPage.jsx"));
-const RoomsPage = lazy(() => import("./pages/RoomsPage.jsx"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage.jsx"));
 
 const withSuspense = (node, label) => (
   <Suspense fallback={<AppLoadingScreen label={label} />}>
@@ -53,9 +55,14 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="home" replace /> },
           { path: "home", element: withSuspense(<DiscoverPage />, "Loading home…") },
+          { path: "search", element: withSuspense(<SearchPage />, "Loading search…") },
+          { path: "notifications", element: withSuspense(<NotificationsPage />, "Loading notifications…") },
           { path: "messages", element: withSuspense(<MessagesPage />, "Loading messages…") },
-          { path: "rooms", element: withSuspense(<RoomsPage />, "Loading jam rooms…") },
-          { path: "liked", element: withSuspense(<LikedMusicPage />, "Loading tracks…") },
+          { path: "rooms", element: <Navigate to="/homepage/messages" replace /> },
+          { path: "profile", element: withSuspense(<ProfilePage />, "Loading profile…") },
+          { path: "profile/:userId", element: withSuspense(<ProfilePage />, "Loading profile…") },
+          { path: "songs", element: withSuspense(<LikedMusicPage />, "Loading songs…") },
+          { path: "liked", element: <Navigate to="/homepage/songs" replace /> },
           { path: "playlists", element: withSuspense(<PlaylistsPage />, "Loading playlists…") },
           { path: "playlists/:id", element: withSuspense(<PlaylistDetailPage />, "Loading playlist…") },
         ],

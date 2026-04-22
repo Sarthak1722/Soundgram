@@ -6,6 +6,7 @@ import OtherUsers from "./OtherUsers.jsx";
 import { createRoom } from "../api/roomsApi.js";
 import { setselectedUser } from "../redux/userSlice.js";
 import { setRoomsList, setSelectedRoomChat } from "../redux/roomsSlice.js";
+import { filterFriendUsers } from "../utils/socialGraph.js";
 
 const ChatSidebar = () => {
   const dispatch = useDispatch();
@@ -16,21 +17,27 @@ const ChatSidebar = () => {
   const [creating, setCreating] = useState(false);
   const { authUser, otherUsers, onlineUsers } = useSelector((store) => store.user);
   const { list: rooms, selectedRoomChat } = useSelector((store) => store.rooms);
-  const filteredUsers = otherUsers?.filter((user) =>
-    user.fullName.toLowerCase().includes(search.toLowerCase()),
+
+  const friendUsers = useMemo(() => filterFriendUsers(otherUsers, authUser), [otherUsers, authUser]);
+  const directMessageUsers = useMemo(
+    () => (friendUsers.length ? friendUsers : authUser?.friends || []),
+    [friendUsers, authUser?.friends],
   );
-  const onlineCount = Math.max((onlineUsers?.length || 1) - 1, 0);
+  const filteredUsers = useMemo(
+    () =>
+      directMessageUsers.filter((user) =>
+        `${user.fullName} ${user.userName}`.toLowerCase().includes(search.toLowerCase()),
+      ),
+    [directMessageUsers, search],
+  );
   const filteredRooms = useMemo(
     () =>
-      (rooms || []).filter((room) =>
-        room.name?.toLowerCase().includes(search.toLowerCase()),
-      ),
+      (rooms || []).filter((room) => room.name?.toLowerCase().includes(search.toLowerCase())),
     [rooms, search],
   );
-  const selectableUsers = useMemo(
-    () => (otherUsers || []).filter((user) => String(user._id) !== String(authUser?._id)),
-    [otherUsers, authUser?._id],
-  );
+  const onlineFriendCount = directMessageUsers.filter((user) =>
+    (onlineUsers || []).some((onlineUserId) => String(onlineUserId) === String(user._id)),
+  ).length;
 
   const toggleMember = (id) => {
     setPicked((prev) => {
@@ -55,14 +62,16 @@ const ChatSidebar = () => {
       return;
     }
     if (picked.size < 1) {
-      toast.error("Pick at least one other user");
+      toast.error("Pick at least one other friend");
       return;
     }
 
     setCreating(true);
     try {
       const room = await createRoom({ name: groupName.trim(), memberIds: [...picked] });
-      dispatch(setRoomsList([room, ...(rooms || []).filter((entry) => String(entry._id) !== String(room._id))]));
+      dispatch(
+        setRoomsList([room, ...(rooms || []).filter((entry) => String(entry._id) !== String(room._id))]),
+      );
       dispatch(setselectedUser(null));
       dispatch(setSelectedRoomChat(room));
       toast.success("Group chat created");
@@ -105,7 +114,7 @@ const ChatSidebar = () => {
         </div>
         <div className="mt-2.5 flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-zinc-500">
           <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.7)]" />
-          {onlineCount} active now
+          {onlineFriendCount} friend{onlineFriendCount === 1 ? "" : "s"} active now
         </div>
       </div>
 
@@ -118,6 +127,7 @@ const ChatSidebar = () => {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
+
       <div className="flex-1 overflow-y-auto px-2.5 pb-3 sm:px-4 sm:pb-4">
         <div className="pb-3">
           <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
@@ -162,7 +172,7 @@ const ChatSidebar = () => {
             Direct messages
           </div>
         </div>
-        <OtherUsers users={search ? filteredUsers : otherUsers} />
+        <OtherUsers users={search ? filteredUsers : directMessageUsers} />
       </div>
 
       {showCreateGroup ? (
@@ -193,27 +203,37 @@ const ChatSidebar = () => {
               />
               <div>
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
-                  Add members
+                  Add friends
                 </p>
                 <div className="max-h-60 space-y-2 overflow-y-auto rounded-2xl border border-white/10 bg-white/[0.03] p-2">
-                  {selectableUsers.map((user) => (
-                    <label
-                      key={user._id}
-                      className="flex cursor-pointer items-center gap-3 rounded-2xl px-3 py-2 hover:bg-white/[0.06]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={picked.has(String(user._id))}
-                        onChange={() => toggleMember(user._id)}
-                        className="rounded border-white/20"
-                      />
-                      <img src={user.profilePhoto} alt="" className="h-9 w-9 rounded-full object-cover" />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm text-white">{user.fullName}</p>
-                        <p className="truncate text-xs text-zinc-500">@{user.userName}</p>
-                      </div>
-                    </label>
-                  ))}
+                  {directMessageUsers.length ? (
+                    directMessageUsers.map((user) => (
+                      <label
+                        key={user._id}
+                        className="flex cursor-pointer items-center gap-3 rounded-2xl px-3 py-2 hover:bg-white/[0.06]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={picked.has(String(user._id))}
+                          onChange={() => toggleMember(user._id)}
+                          className="rounded border-white/20"
+                        />
+                        <img
+                          src={user.profilePhoto}
+                          alt=""
+                          className="h-9 w-9 rounded-full object-cover"
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm text-white">{user.fullName}</p>
+                          <p className="truncate text-xs text-zinc-500">@{user.userName}</p>
+                        </div>
+                      </label>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-zinc-500">
+                      No friends available yet
+                    </div>
+                  )}
                 </div>
               </div>
               <button

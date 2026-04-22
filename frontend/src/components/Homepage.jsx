@@ -8,9 +8,12 @@ import { writeHomeContinuity } from "../utils/homeContinuity.js";
 
 const routeLabels = {
   "/homepage/home": "Home",
+  "/homepage/search": "Search",
+  "/homepage/notifications": "Notifications",
   "/homepage/messages": "Messages",
-  "/homepage/rooms": "Jam rooms",
-  "/homepage/liked": "Tracks",
+  "/homepage/profile": "Profile",
+  "/homepage/songs": "Songs",
+  "/homepage/liked": "Songs",
   "/homepage/playlists": "Playlists",
 };
 

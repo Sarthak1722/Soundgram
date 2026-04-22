@@ -5,3 +5,19 @@ export async function fetchPlaybackTracks() {
   const { data } = await apiClient.get("/api/v1/playback/tracks");
   return Array.isArray(data.tracks) ? data.tracks : [];
 }
+
+export async function uploadPlaybackTrack({ songFile, title, artist, album }) {
+  const formData = new FormData();
+  formData.append("song", songFile);
+  if (title) formData.append("title", title);
+  if (artist) formData.append("artist", artist);
+  if (album) formData.append("album", album);
+
+  const { data } = await apiClient.post("/api/v1/playback/tracks", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return data.track;
+}
