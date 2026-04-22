@@ -10,7 +10,8 @@ import { listRooms } from "../api/roomsApi.js";
 const MessagesPage = () => {
   const dispatch = useDispatch();
   const selectedUser = useSelector((store) => store.user.selectedUser);
-  const hasOpenThread = Boolean(selectedUser?._id);
+  const selectedRoomChat = useSelector((store) => store.rooms.selectedRoomChat);
+  const hasOpenThread = Boolean(selectedUser?._id || selectedRoomChat?._id);
   useGetOtherUsers();
 
   useEffect(() => {
