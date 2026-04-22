@@ -6,12 +6,13 @@ export async function fetchPlaybackTracks() {
   return Array.isArray(data.tracks) ? data.tracks : [];
 }
 
-export async function uploadPlaybackTrack({ songFile, title, artist, album }) {
+export async function uploadPlaybackTrack({ songFile, title, artist, album, duration }) {
   const formData = new FormData();
   formData.append("song", songFile);
   if (title) formData.append("title", title);
   if (artist) formData.append("artist", artist);
   if (album) formData.append("album", album);
+  if (duration) formData.append("duration", duration);
 
   const { data } = await apiClient.post("/api/v1/playback/tracks", formData, {
     headers: {

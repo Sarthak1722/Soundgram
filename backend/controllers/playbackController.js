@@ -36,13 +36,18 @@ export const uploadPlaybackTrack = (req, res) => {
     const title = String(req.body.title || defaultTitle).trim() || defaultTitle;
     const artist = String(req.body.artist || "Local upload").trim() || "Local upload";
     const album = String(req.body.album || "Available songs").trim() || "Available songs";
+    const duration = String(req.body.duration || "").trim();
+
+    if (!duration) {
+      return res.status(400).json({ message: "Add the song duration before uploading." });
+    }
 
     const track = appendTrackCatalogEntry({
       id: `track-${randomUUID()}`,
       title,
       artist,
       album,
-      duration: "—",
+      duration,
       file: req.file.filename,
     });
 

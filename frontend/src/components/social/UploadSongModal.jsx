@@ -8,6 +8,7 @@ const UploadSongModal = ({ open, onClose, onTrackUploaded }) => {
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadArtist, setUploadArtist] = useState("");
   const [uploadAlbum, setUploadAlbum] = useState("");
+  const [uploadDuration, setUploadDuration] = useState("");
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
@@ -17,6 +18,7 @@ const UploadSongModal = ({ open, onClose, onTrackUploaded }) => {
       setUploadTitle("");
       setUploadArtist("");
       setUploadAlbum("");
+      setUploadDuration("");
       setUploading(false);
       setDragActive(false);
     }
@@ -57,6 +59,11 @@ const UploadSongModal = ({ open, onClose, onTrackUploaded }) => {
       return;
     }
 
+    if (!uploadDuration.trim()) {
+      toast.error("Add the song duration too.");
+      return;
+    }
+
     setUploading(true);
     try {
       const uploadedTrack = await uploadPlaybackTrack({
@@ -64,6 +71,7 @@ const UploadSongModal = ({ open, onClose, onTrackUploaded }) => {
         title: uploadTitle,
         artist: uploadArtist,
         album: uploadAlbum,
+        duration: uploadDuration.trim(),
       });
 
       onTrackUploaded(uploadedTrack);
@@ -121,7 +129,7 @@ const UploadSongModal = ({ open, onClose, onTrackUploaded }) => {
             />
           </label>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <input
               value={uploadTitle}
               onChange={(event) => setUploadTitle(event.target.value)}
@@ -138,6 +146,12 @@ const UploadSongModal = ({ open, onClose, onTrackUploaded }) => {
               value={uploadAlbum}
               onChange={(event) => setUploadAlbum(event.target.value)}
               placeholder="Album (optional)"
+              className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white placeholder:text-zinc-500"
+            />
+            <input
+              value={uploadDuration}
+              onChange={(event) => setUploadDuration(event.target.value)}
+              placeholder="Duration (e.g. 3:45)"
               className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white placeholder:text-zinc-500"
             />
           </div>
